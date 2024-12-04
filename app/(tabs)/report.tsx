@@ -1,6 +1,6 @@
 import { CameraView, CameraType, useCameraPermissions, Camera } from 'expo-camera';
 import { useRef, useState } from 'react';
-import { Button, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Button, Image, StyleSheet, Text, TouchableOpacity, SafeAreaView, View } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 
 export default function App() {
@@ -17,10 +17,10 @@ export default function App() {
   if (!permission.granted) {
     // Camera permissions are not granted yet.
     return (
-      <View style={styles.container}>
+      <SafeAreaView style={styles.container}>
         <Text style={styles.message}>We need your permission to show the camera</Text>
         <Button onPress={requestPermission} title="grant permission" />
-      </View>
+      </SafeAreaView>
     );
   }
 
@@ -57,7 +57,7 @@ export default function App() {
       formData.append('location', 'string'); // Replace with actual location if applicable
       formData.append('name', 'string'); // Replace with actual name if applicable
   
-      const response = await fetch('http://192.168.1.89:8000/upload/', {
+      const response = await fetch('http://172.20.10.6:8000/upload/', {
         method: 'POST',
         headers: {
           'Content-Type': 'multipart/form-data',
@@ -79,30 +79,30 @@ export default function App() {
   
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       {photoUri ? (
-        <View style={styles.previewContainer}>
+        <SafeAreaView style={styles.previewContainer}>
           <Image source={{ uri: photoUri }} style={styles.preview} />
-          <View style={{ display: 'flex', justifyContent: 'space-around', gap: 20, }}>
+          <SafeAreaView style={{ display: 'flex', justifyContent: 'space-around', gap: 20, }}>
             <Button title="Retake Photo" onPress={() => setPhotoUri(null)} />
             <Button title="Upload Photo" onPress={uploadPhoto} />
-          </View>
-        </View>
+          </SafeAreaView>
+        </SafeAreaView>
       ) : (
         <CameraView style={styles.camera} facing={facing} ref={cameraRef}>
-          <View style={styles.buttonContainer}>
+          <SafeAreaView style={styles.buttonContainer}>
             <TouchableOpacity style={styles.button} onPress={toggleCameraFacing}>
               <Ionicons name="camera-reverse-outline" size={36} color="#ffffff" />
             </TouchableOpacity>
-          </View>
-          <View style={styles.bottomBar}>
+          </SafeAreaView>
+          <SafeAreaView style={styles.bottomBar}>
             <TouchableOpacity onPress={takePicture} style={styles.captureButton}>
               <Ionicons name="camera" size={36} color="#000000" />
             </TouchableOpacity>
-          </View>
+          </SafeAreaView>
         </CameraView>
       )}
-    </View>
+    </SafeAreaView>
   );
 }
 
