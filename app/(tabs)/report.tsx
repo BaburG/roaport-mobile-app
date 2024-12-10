@@ -1,32 +1,32 @@
 import { CameraView, CameraType, useCameraPermissions, Camera } from 'expo-camera';
 import { useRef, useState } from 'react';
-import { Button, Image, StyleSheet, Text, TouchableOpacity, SafeAreaView, View } from 'react-native';
+import { Button, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function App() {
   const [facing, setFacing] = useState<CameraType>('back');
   const [permission, requestPermission] = useCameraPermissions();
   const cameraRef = useRef<CameraView>(null);
   const [photoUri, setPhotoUri] = useState<string | null>(null);
+  const insets = useSafeAreaInsets();
 
   if (!permission) {
-    // Camera permissions are still loading.
     return <View />;
   }
 
   if (!permission.granted) {
-    // Camera permissions are not granted yet.
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView style={[styles.container, { paddingBottom: insets.bottom }]}>
         <Text style={styles.message}>We need your permission to show the camera</Text>
-        <Button onPress={requestPermission} title="grant permission" />
+        <Button onPress={requestPermission} title="Grant Permission" />
       </SafeAreaView>
     );
   }
 
-  function toggleCameraFacing() {
-    setFacing(current => (current === 'back' ? 'front' : 'back'));
-  }
+  const toggleCameraFacing = () => {
+    setFacing((current) => (current === 'back' ? 'front' : 'back'));
+  };
 
   const takePicture = async () => {
     if (cameraRef.current) {
@@ -41,22 +41,16 @@ export default function App() {
       console.error('No photo available for upload.');
       return;
     }
-  
+
     try {
       const formData = new FormData();
-  
-      // Attach the file
+
       formData.append('file', {
         uri: photoUri,
-        name: 'photo.jpg', // Adjust as necessary
-        type: 'image/jpeg', // Adjust based on your image type
+        name: 'photo.jpg',
+        type: 'image/jpeg',
       });
-  
-      // Add other required fields
-      formData.append('hash', 'string'); // Replace 'string' with actual hash value if applicable
-      formData.append('location', 'string'); // Replace with actual location if applicable
-      formData.append('name', 'string'); // Replace with actual name if applicable
-  
+
       const response = await fetch('http://172.20.10.6:8000/upload/', {
         method: 'POST',
         headers: {
@@ -64,11 +58,9 @@ export default function App() {
         },
         body: formData,
       });
-  
+
       if (response.ok) {
         console.log('Photo uploaded successfully!');
-        const data = await response.json();
-        console.log('Response:', data);
       } else {
         console.error('Failed to upload photo:', await response.text());
       }
@@ -76,30 +68,29 @@ export default function App() {
       console.error('Error uploading photo:', error);
     }
   };
-  
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { paddingBottom: insets.bottom }]}>
       {photoUri ? (
-        <SafeAreaView style={styles.previewContainer}>
+        <View style={styles.previewContainer}>
           <Image source={{ uri: photoUri }} style={styles.preview} />
-          <SafeAreaView style={{ display: 'flex', justifyContent: 'space-around', gap: 20, }}>
+          <View style={styles.actionsContainer}>
             <Button title="Retake Photo" onPress={() => setPhotoUri(null)} />
             <Button title="Upload Photo" onPress={uploadPhoto} />
-          </SafeAreaView>
-        </SafeAreaView>
+          </View>
+        </View>
       ) : (
         <CameraView style={styles.camera} facing={facing} ref={cameraRef}>
-          <SafeAreaView style={styles.buttonContainer}>
+          <View style={[styles.buttonContainer, { marginTop: insets.top }]}>
             <TouchableOpacity style={styles.button} onPress={toggleCameraFacing}>
               <Ionicons name="camera-reverse-outline" size={36} color="#ffffff" />
             </TouchableOpacity>
-          </SafeAreaView>
-          <SafeAreaView style={styles.bottomBar}>
+          </View>
+          <View style={[styles.bottomBar, { paddingBottom: insets.bottom }]}>
             <TouchableOpacity onPress={takePicture} style={styles.captureButton}>
               <Ionicons name="camera" size={36} color="#000000" />
             </TouchableOpacity>
-          </SafeAreaView>
+          </View>
         </CameraView>
       )}
     </SafeAreaView>
@@ -109,6 +100,7 @@ export default function App() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: 'black',
   },
   message: {
     textAlign: 'center',
@@ -120,25 +112,23 @@ const styles = StyleSheet.create({
   buttonContainer: {
     flexDirection: 'row',
     backgroundColor: 'transparent',
-    justifyContent: "flex-end",
-    marginTop: 60,
+    justifyContent: 'flex-end',
     marginRight: 20,
   },
-  button: {
-  },
+  button: {},
   bottomBar: {
     position: 'absolute',
-    bottom: 20,
+    bottom: 0,
     width: '100%',
-    height: 80,
-    backgroundColor: 'transparent', // Semi-transparent background
+    height: 100,
+    backgroundColor: 'transparent',
     justifyContent: 'center',
     alignItems: 'center',
   },
   captureButton: {
     width: 70,
     height: 70,
-    borderRadius: 35, // Makes the button circular
+    borderRadius: 35,
     backgroundColor: 'white',
     justifyContent: 'center',
     alignItems: 'center',
@@ -153,9 +143,10 @@ const styles = StyleSheet.create({
     height: '50%',
     marginBottom: 20,
   },
-  text: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: 'white',
+  actionsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    width: '100%',
+    padding: 20,
   },
 });
