@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Image, StyleSheet, FlatList, Text, TextInput, Button, View, Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import ParallaxScrollView from "@/components/ParallaxScrollView";
+import { useColorScheme } from '@/hooks/useColorScheme';
 
 type Score = {
   username: string;
@@ -9,22 +10,23 @@ type Score = {
 };
 
 export default function HomeScreen() {
+  const colorScheme = useColorScheme();
   const [scores, setScores] = useState<Score[]>([]);
-  const [username, setUsername] = useState<string | null>(null);
-  const [isPromptVisible, setIsPromptVisible] = useState<boolean>(false);
-  const [newUsername, setNewUsername] = useState<string>('');
+  const [username, setUsername] = useState<string>('');
 
-  // Kullanıcı adını kontrol edip, prompt gösterir.
+  // Load username on mount
   useEffect(() => {
-    const checkUsername = async () => {
-      const storedUsername = await AsyncStorage.getItem('username');
-      if (!storedUsername) {
-        setIsPromptVisible(true);
-      } else {
-        setUsername(storedUsername);
+    const loadUsername = async () => {
+      try {
+        const storedUsername = await AsyncStorage.getItem('username');
+        if (storedUsername) {
+          setUsername(storedUsername);
+        }
+      } catch (error) {
+        console.error('Error loading username:', error);
       }
     };
-    checkUsername();
+    loadUsername();
   }, []);
 
   // API'den veriyi çeker
@@ -42,104 +44,153 @@ export default function HomeScreen() {
     fetchScores();
   }, []);
 
-  // Yeni kullanıcı adını kaydeder
-  const handleSaveUsername = async () => {
-    if (newUsername.trim().length > 0) {
-      await AsyncStorage.setItem('username', newUsername);
-      setUsername(newUsername);
-      setIsPromptVisible(false);
-    } else {
-      Alert.alert('Uyarı', 'Lütfen geçerli bir kullanıcı adı girin.');
-    }
-  };
-
   return (
     <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
+      headerBackgroundColor={{ light: '#2563EB', dark: '#1E40AF' }}
       headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
+        <View style={styles.headerContainer}>
+          <Image
+            source={require('@/assets/images/partial-react-logo.png')}
+            style={styles.reactLogo}
+          />
+          <View style={styles.welcomeOverlay}>
+            <Text style={styles.welcomeText}>Welcome back,</Text>
+            <Text style={styles.usernameText}>{username}!</Text>
+          </View>
+        </View>
       }
     >
-      {/* Kullanıcı adını girmek için prompt */}
-      {isPromptVisible && (
-        <View style={styles.promptContainer}>
-          <Text style={styles.promptText}>Lütfen kullanıcı adınızı girin:</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Kullanıcı Adı"
-            value={newUsername}
-            onChangeText={setNewUsername}
-          />
-          <Button title="Kaydet" onPress={handleSaveUsername} />
-        </View>
-      )}
-
-      {/* Skor Listesi */}
-      <FlatList
-        data={scores}
-        keyExtractor={(item, index) => `${item.username}-${index}`}
-        renderItem={({ item }) => (
-          <View style={styles.listItem}>
-            <Text style={styles.username}>{item.username}</Text>
-            <Text style={styles.score}>{item.total}</Text>
-          </View>
-        )}
-        contentContainerStyle={styles.listContainer}
-      />
+      <View style={styles.scoreboardContainer}>
+        <Text style={[styles.scoreboardTitle, { color: colorScheme === 'dark' ? '#fff' : '#1F2937' }]}>
+          Leaderboard
+        </Text>
+        <FlatList
+          data={scores}
+          keyExtractor={(item, index) => `${item.username}-${index}`}
+          renderItem={({ item, index }) => (
+            <View style={[
+              styles.listItem,
+              { backgroundColor: colorScheme === 'dark' ? '#1F2937' : '#fff' }
+            ]}>
+              <View style={styles.rankContainer}>
+                <Text style={[
+                  styles.rankText,
+                  { color: colorScheme === 'dark' ? '#9CA3AF' : '#6B7280' }
+                ]}>
+                  #{index + 1}
+                </Text>
+              </View>
+              <View style={styles.userInfoContainer}>
+                <Text style={[
+                  styles.username,
+                  { color: colorScheme === 'dark' ? '#fff' : '#1F2937' }
+                ]}>
+                  {item.username}
+                </Text>
+              </View>
+              <View style={styles.scoreContainer}>
+                <Text style={[
+                  styles.score,
+                  { color: colorScheme === 'dark' ? '#9CA3AF' : '#6B7280' }
+                ]}>
+                  {item.total} points
+                </Text>
+              </View>
+            </View>
+          )}
+          contentContainerStyle={styles.listContainer}
+        />
+      </View>
     </ParallaxScrollView>
   );
 }
 
 const styles = StyleSheet.create({
+  headerContainer: {
+    flex: 1,
+    position: 'relative',
+    width: '100%',
+    height: '100%',
+  },
   reactLogo: {
     height: 178,
     width: 290,
     bottom: 0,
     left: 0,
     position: 'absolute',
+    opacity: 0.9,
   },
-  promptContainer: {
-    padding: 16,
-    backgroundColor: '#fff',
-    borderRadius: 8,
-    margin: 16,
+  welcomeOverlay: {
+    position: 'absolute',
+    top: '40%',
+    left: 0,
+    right: 0,
+    paddingHorizontal: 24,
   },
-  promptText: {
-    fontSize: 16,
-    marginBottom: 8,
+  welcomeText: {
+    fontSize: 20,
+    fontWeight: '500',
+    textAlign: 'left',
+    color: '#fff',
+    opacity: 0.9,
   },
-  input: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 4,
-    padding: 8,
-    marginBottom: 8,
+  usernameText: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    textAlign: 'left',
+    color: '#fff',
+    marginTop: 4,
+  },
+  scoreboardContainer: {
+    flex: 1,
+    paddingTop: 24,
+  },
+  scoreboardTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    paddingHorizontal: 16,
+    marginBottom: 16,
   },
   listContainer: {
     paddingHorizontal: 16,
-    paddingBottom: 16,
+    paddingBottom: 24,
   },
   listItem: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    alignItems: 'center',
     padding: 16,
-    backgroundColor: '#f9f9f9',
-    marginBottom: 8,
-    borderRadius: 8,
+    marginBottom: 12,
+    borderRadius: 12,
     shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
     shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
+    shadowRadius: 3,
+    elevation: 3,
+  },
+  rankContainer: {
+    width: 40,
+  },
+  rankText: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  userInfoContainer: {
+    flex: 1,
+    marginLeft: 12,
   },
   username: {
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: '600',
+  },
+  scoreContainer: {
+    marginLeft: 'auto',
+    paddingLeft: 12,
   },
   score: {
     fontSize: 16,
-    color: '#555',
+    fontWeight: '500',
   },
 });
