@@ -1,11 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { StyleSheet, View, Text, TextInput, Button, Alert, ActivityIndicator } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
+import { AuthContext } from '../_layout';
 
 export default function UsernamePage() {
     const [username, setUsername] = useState('');
     const router = useRouter();
+    const { updateUsername } = useContext(AuthContext);
 
     const handleSave = async () => {
         if (username.trim().length === 0) {
@@ -15,7 +17,8 @@ export default function UsernamePage() {
 
         try {
             await AsyncStorage.setItem('username', username);
-            router.replace('/(tabs)');
+            updateUsername(true);
+            router.replace('/(app)/(tabs)');
         } catch (error) {
             console.error('Error saving username:', error);
             Alert.alert('Error', 'Failed to save username.');

@@ -1,14 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { StyleSheet, View, Text, TouchableOpacity, Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { AuthContext } from '@/app/_layout';
 
 export default function SettingsScreen() {
   const [username, setUsername] = useState<string>('');
   const router = useRouter();
   const colorScheme = useColorScheme();
+  const { updateUsername } = useContext(AuthContext);
 
   useEffect(() => {
     loadUsername();
@@ -40,7 +42,8 @@ export default function SettingsScreen() {
           onPress: async () => {
             try {
               await AsyncStorage.removeItem('username');
-              router.replace('/username');
+              updateUsername(false);
+              router.replace('/(auth)/username');
             } catch (error) {
               console.error('Error removing username:', error);
               Alert.alert('Error', 'Failed to change username');
@@ -66,7 +69,8 @@ export default function SettingsScreen() {
           onPress: async () => {
             try {
               await AsyncStorage.removeItem('username');
-              router.replace('/username');
+              updateUsername(false);
+              router.replace('/(auth)/username');
             } catch (error) {
               console.error('Error deleting account:', error);
               Alert.alert('Error', 'Failed to delete account');

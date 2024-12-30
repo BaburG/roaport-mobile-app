@@ -1,6 +1,6 @@
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useRef, useState, useEffect } from 'react';
-import { ActivityIndicator, Image, StyleSheet, Text, TextInput, TouchableOpacity, View, Modal, ScrollView } from 'react-native';
+import { ActivityIndicator, Image, StyleSheet, Text, TextInput, TouchableOpacity, View, Modal, ScrollView, Alert } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import Toast from 'react-native-toast-message';
@@ -8,6 +8,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { SuccessAnimation } from '@/components/SuccessAnimation';
 import * as Location from 'expo-location';
+import { useRouter } from 'expo-router';
 
 const REPORT_TYPES = [
   { id: 'Pothole', label: 'Pothole', description: 'Report damaged road surface' },
@@ -28,6 +29,7 @@ export default function ReportScreen() {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [isClosingForm, setIsClosingForm] = useState(false);
   const [location, setLocation] = useState<{ latitude: number; longitude: number } | null>(null);
+  const router = useRouter();
 
   useEffect(() => {
     (async () => {
@@ -104,13 +106,11 @@ export default function ReportScreen() {
 
   const uploadPhoto = async () => {
     if (!selectedType) {
-      Toast.show({
-        type: 'error',
-        text1: 'Missing Report Type',
-        text2: 'Please select what type of issue you want to report',
-        position: 'bottom',
-        visibilityTime: 3000,
-      });
+      Alert.alert(
+        'Missing Report Type',
+        'Please select what type of issue you want to report',
+        [{ text: 'OK' }]
+      );
       return;
     }
 
@@ -119,11 +119,24 @@ export default function ReportScreen() {
     try {
       const storedUsername = await AsyncStorage.getItem('username');
       if (!storedUsername) {
-        Toast.show({
-          type: 'error',
-          text1: 'Error',
-          text2: 'No username found. Please set your username first.',
-        });
+        Alert.alert(
+          'No Username Found',
+          'Please set your username in the settings before submitting a report.',
+          [
+            {
+              text: 'Go to Settings',
+              onPress: () => {
+                handleBack();
+                router.push('/(tabs)/settings');
+              },
+              style: 'default',
+            },
+            {
+              text: 'Cancel',
+              style: 'cancel',
+            },
+          ]
+        );
         return;
       }
 
@@ -170,11 +183,11 @@ export default function ReportScreen() {
       }
     } catch (error) {
       console.error('Error uploading photo:', error);
-      Toast.show({
-        type: 'error',
-        text1: 'Error',
-        text2: 'Failed to submit report.',
-      });
+      Alert.alert(
+        'Upload Failed',
+        'Failed to submit report. Please try again.',
+        [{ text: 'OK' }]
+      );
     } finally {
       setUploading(false);
     }
