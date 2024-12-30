@@ -143,6 +143,8 @@ export default function ReportScreen() {
         formData.append('location', JSON.stringify(location));
       }
 
+      console.log('Form data:', formData);
+
       const response = await fetch('https://roaport-upload-backend.thankfulpond-dc02f385.italynorth.azurecontainerapps.io/upload/', {
         method: 'POST',
         headers: {

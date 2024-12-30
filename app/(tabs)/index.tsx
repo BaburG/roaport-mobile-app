@@ -1,13 +1,16 @@
 import React, { useEffect, useState } from 'react';
-import { Image, StyleSheet, FlatList, Text, TextInput, Button, View, Alert } from 'react-native';
+import { Image, StyleSheet, FlatList, Text, View, Alert, Dimensions } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import ParallaxScrollView from "@/components/ParallaxScrollView";
 import { useColorScheme } from '@/hooks/useColorScheme';
+import { BlurView } from 'expo-blur';
 
 type Score = {
   username: string;
   total: number;
 };
+
+const HEADER_HEIGHT = 250;
+const { width } = Dimensions.get('window');
 
 export default function HomeScreen() {
   const colorScheme = useColorScheme();
@@ -29,7 +32,6 @@ export default function HomeScreen() {
     loadUsername();
   }, []);
 
-  // API'den veriyi çeker
   useEffect(() => {
     const fetchScores = async () => {
       try {
@@ -44,77 +46,99 @@ export default function HomeScreen() {
     fetchScores();
   }, []);
 
-  return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#2563EB', dark: '#1E40AF' }}
-      headerImage={
-        <View style={styles.headerContainer}>
-          <Image
-            source={require('@/assets/images/partial-react-logo.png')}
-            style={styles.reactLogo}
-          />
-          <View style={styles.welcomeOverlay}>
-            <Text style={styles.welcomeText}>Welcome back,</Text>
-            <Text style={styles.usernameText}>{username}!</Text>
-          </View>
-        </View>
-      }
-    >
-      <View style={styles.scoreboardContainer}>
-        <Text style={[styles.scoreboardTitle, { color: colorScheme === 'dark' ? '#fff' : '#1F2937' }]}>
-          Leaderboard
-        </Text>
-        <FlatList
-          data={scores}
-          keyExtractor={(item, index) => `${item.username}-${index}`}
-          renderItem={({ item, index }) => (
-            <View style={[
-              styles.listItem,
-              { backgroundColor: colorScheme === 'dark' ? '#1F2937' : '#fff' }
-            ]}>
-              <View style={styles.rankContainer}>
-                <Text style={[
-                  styles.rankText,
-                  { color: colorScheme === 'dark' ? '#9CA3AF' : '#6B7280' }
-                ]}>
-                  #{index + 1}
-                </Text>
-              </View>
-              <View style={styles.userInfoContainer}>
-                <Text style={[
-                  styles.username,
-                  { color: colorScheme === 'dark' ? '#fff' : '#1F2937' }
-                ]}>
-                  {item.username}
-                </Text>
-              </View>
-              <View style={styles.scoreContainer}>
-                <Text style={[
-                  styles.score,
-                  { color: colorScheme === 'dark' ? '#9CA3AF' : '#6B7280' }
-                ]}>
-                  {item.total} points
-                </Text>
-              </View>
-            </View>
-          )}
-          contentContainerStyle={styles.listContainer}
-        />
+  const renderHeader = () => (
+    <View style={styles.headerContainer}>
+      <Image
+        source={require('@/assets/images/partial-react-logo.png')}
+        style={styles.reactLogo}
+      />
+      <BlurView intensity={80} style={styles.welcomeOverlay}>
+        <Text style={styles.welcomeText}>Welcome back,</Text>
+        <Text style={styles.usernameText}>{username}!</Text>
+      </BlurView>
+    </View>
+  );
+
+  const renderItem = ({ item, index }: { item: Score; index: number }) => (
+    <View style={[
+      styles.listItem,
+      { backgroundColor: colorScheme === 'dark' ? '#1F2937' : '#fff' }
+    ]}>
+      {/* Medal for top 3 */}
+      <View style={[styles.rankContainer, index < 3 && styles.topThree]}>
+        {index < 3 ? (
+          <Text style={styles.medalEmoji}>
+            {index === 0 ? '🥇' : index === 1 ? '🥈' : '🥉'}
+          </Text>
+        ) : (
+          <Text style={[
+            styles.rankText,
+            { color: colorScheme === 'dark' ? '#9CA3AF' : '#6B7280' }
+          ]}>
+            #{index + 1}
+          </Text>
+        )}
       </View>
-    </ParallaxScrollView>
+      
+      <View style={styles.userInfoContainer}>
+        <Text style={[
+          styles.username,
+          { color: colorScheme === 'dark' ? '#fff' : '#1F2937' }
+        ]}>
+          {item.username}
+        </Text>
+      </View>
+      
+      <View style={styles.scoreContainer}>
+        <Text style={[
+          styles.score,
+          { color: colorScheme === 'dark' ? '#9CA3AF' : '#6B7280' }
+        ]}>
+          {item.total.toLocaleString()} pts
+        </Text>
+      </View>
+    </View>
+  );
+
+  return (
+    <FlatList
+      data={scores}
+      keyExtractor={(item, index) => `${item.username}-${index}`}
+      renderItem={renderItem}
+      ListHeaderComponent={
+        <>
+          {renderHeader()}
+          <View style={styles.scoreboardTitleContainer}>
+            <Text style={[
+              styles.scoreboardTitle,
+              { color: colorScheme === 'dark' ? '#fff' : '#1F2937' }
+            ]}>
+              Top Players
+            </Text>
+          </View>
+        </>
+      }
+      contentContainerStyle={styles.listContainer}
+      showsVerticalScrollIndicator={false}
+      style={styles.flatList}
+    />
   );
 }
 
 const styles = StyleSheet.create({
-  headerContainer: {
+  flatList: {
     flex: 1,
+    width: '100%',
+  },
+  headerContainer: {
+    height: HEADER_HEIGHT,
+    backgroundColor: '#2563EB',
     position: 'relative',
     width: '100%',
-    height: '100%',
   },
   reactLogo: {
-    height: 178,
-    width: 290,
+    height: 300,
+    width: 500,
     bottom: 0,
     left: 0,
     position: 'absolute',
@@ -122,37 +146,34 @@ const styles = StyleSheet.create({
   },
   welcomeOverlay: {
     position: 'absolute',
-    top: '40%',
+    bottom: 0,
     left: 0,
     right: 0,
     paddingHorizontal: 24,
+    paddingVertical: 20,
   },
   welcomeText: {
     fontSize: 20,
     fontWeight: '500',
-    textAlign: 'left',
     color: '#fff',
     opacity: 0.9,
   },
   usernameText: {
     fontSize: 32,
     fontWeight: 'bold',
-    textAlign: 'left',
     color: '#fff',
     marginTop: 4,
   },
-  scoreboardContainer: {
-    flex: 1,
-    paddingTop: 24,
+  scoreboardTitleContainer: {
+    paddingHorizontal: 16,
+    paddingVertical: 20,
+    width: '100%',
   },
   scoreboardTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    paddingHorizontal: 16,
-    marginBottom: 16,
   },
   listContainer: {
-    paddingHorizontal: 16,
     paddingBottom: 24,
   },
   listItem: {
@@ -160,7 +181,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 16,
     marginBottom: 12,
-    borderRadius: 12,
+    marginHorizontal: 16,
+    borderRadius: 16,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
@@ -171,7 +193,17 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   rankContainer: {
-    width: 40,
+    width: 32,
+    alignItems: 'center',
+  },
+  topThree: {
+    width: 36,
+    height: 32,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  medalEmoji: {
+    fontSize: 20,
   },
   rankText: {
     fontSize: 16,
