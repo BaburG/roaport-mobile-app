@@ -1,4 +1,4 @@
-import { CameraView, useCameraPermissions } from 'expo-camera';
+import { CameraView, useCameraPermissions, FlashMode, Camera } from 'expo-camera';
 import { useRef, useState, useEffect } from 'react';
 import { ActivityIndicator, Image, StyleSheet, Text, TextInput, TouchableOpacity, View, Modal, ScrollView, Alert } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
@@ -30,6 +30,7 @@ export default function ReportScreen() {
   const [isClosingForm, setIsClosingForm] = useState(false);
   const [location, setLocation] = useState<{ latitude: number; longitude: number } | null>(null);
   const router = useRouter();
+  const [flashMode, setFlashMode] = useState<boolean>(false);
 
   useEffect(() => {
     (async () => {
@@ -70,7 +71,7 @@ export default function ReportScreen() {
           latitude: location.coords.latitude,
           longitude: location.coords.longitude
         });
-        
+
         setLocation({
           latitude: location.coords.latitude,
           longitude: location.coords.longitude
@@ -87,6 +88,10 @@ export default function ReportScreen() {
         });
       }
     }
+  };
+
+  const changeFlashMode = async () => {
+    setFlashMode(!flashMode);
   };
 
   const handleBack = () => {
@@ -230,11 +235,24 @@ export default function ReportScreen() {
     <>
       <SafeAreaView style={styles.container} edges={['top']}>
         <View style={styles.cameraContainer}>
-          <CameraView 
-            style={styles.camera} 
+          <CameraView
+            flash={flashMode ? 'on' : 'off'}
+            enableTorch={flashMode}
+            style={styles.camera}
             ref={cameraRef}
             facing="back"
           >
+            <View style={{display: 'flex', justifyContent: 'flex-end', flexDirection: 'row', zIndex: 2}}>
+            <TouchableOpacity
+                onPress={changeFlashMode}
+              >
+                <Ionicons style={{marginRight: 20, marginTop: 20}}
+                    name={!flashMode ? "flash-outline" : "flash-off-outline"}
+                    size={28}
+                    color={colorScheme === 'dark' ? '#fff' : '#1F2937'}
+                  />
+              </TouchableOpacity>
+            </View>
             <View style={styles.captureContainer}>
               <TouchableOpacity
                 onPress={takePicture}
@@ -255,7 +273,7 @@ export default function ReportScreen() {
           <View style={styles.modalContainer}>
             <View style={[
               styles.formContainer,
-              { 
+              {
                 backgroundColor: colorScheme === 'dark' ? '#1F2937' : '#fff',
                 paddingTop: insets.top,
               }
@@ -265,9 +283,9 @@ export default function ReportScreen() {
                   style={styles.backButton}
                   onPress={handleBack}
                 >
-                  <Ionicons 
-                    name="chevron-back" 
-                    size={28} 
+                  <Ionicons
+                    name="chevron-back"
+                    size={28}
                     color={colorScheme === 'dark' ? '#fff' : '#1F2937'}
                   />
                   <Text style={[
@@ -279,14 +297,14 @@ export default function ReportScreen() {
                 </TouchableOpacity>
               </View>
 
-              <ScrollView 
+              <ScrollView
                 style={styles.scrollContainer}
                 contentContainerStyle={styles.scrollContent}
                 showsVerticalScrollIndicator={false}
               >
                 {photoUri ? (
-                  <Image 
-                    source={{ uri: photoUri }} 
+                  <Image
+                    source={{ uri: photoUri }}
                     style={styles.preview}
                   />
                 ) : null}
@@ -298,7 +316,7 @@ export default function ReportScreen() {
                   ]}>
                     What do you want to report?
                   </Text>
-                  
+
                   {renderTypeButtons()}
 
                   <Text style={[
@@ -310,7 +328,7 @@ export default function ReportScreen() {
                   <TextInput
                     style={[
                       styles.descriptionInput,
-                      { 
+                      {
                         backgroundColor: colorScheme === 'dark' ? '#374151' : '#F3F4F6',
                         color: colorScheme === 'dark' ? '#fff' : '#1F2937'
                       }
@@ -361,7 +379,7 @@ export default function ReportScreen() {
           styles.successModalContainer,
         ]}>
           <View style={styles.successModalContent}>
-            <SuccessAnimation 
+            <SuccessAnimation
               message="Report submitted successfully!"
               onAnimationComplete={handleSuccessAnimationComplete}
             />
