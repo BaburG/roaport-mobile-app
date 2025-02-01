@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "roaport-mobile-app",
+    "name": "Roaport Mobile App",
     "slug": "roaport-mobile-app",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -9,13 +9,27 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.anonymous.roaport-mobile-app",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "This app needs access to location when open to mark the location of reported issues.",
+        "NSLocationAlwaysUsageDescription": "This app needs access to location when in the background to mark the location of reported issues.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "This app needs access to location to mark the location of reported issues.",
+        "NSCameraUsageDescription": "This app needs access to the camera to take photos of road issues."
+      }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.RECORD_AUDIO"
+      ],
+      "package": "com.anonymous.roaportmobileapp"
     },
     "web": {
       "bundler": "metro",
@@ -32,10 +46,33 @@
           "resizeMode": "contain",
           "backgroundColor": "#ffffff"
         }
+      ],
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Allow $(PRODUCT_NAME) to use your location to report road issues.",
+          "locationAlwaysPermission": "Allow $(PRODUCT_NAME) to use your location to report road issues.",
+          "locationWhenInUsePermission": "Allow $(PRODUCT_NAME) to use your location to report road issues.",
+          "isIosBackgroundLocationEnabled": false
+        }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow $(PRODUCT_NAME) to access your camera to take photos of road issues."
+        }
       ]
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "9d328337-c3bf-4a2b-bd2d-28e5592fbe38"
+      }
     }
   }
 }
