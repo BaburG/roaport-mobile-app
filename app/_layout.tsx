@@ -13,6 +13,7 @@ import Toast from 'react-native-toast-message';
 
 // Create a context to share the auth state
 import { createContext } from 'react';
+import { LanguageProvider } from './languageContext';
 export const AuthContext = createContext<{
   hasUsername: boolean | null;
   isLoading: boolean;
@@ -20,7 +21,7 @@ export const AuthContext = createContext<{
 }>({
   hasUsername: null,
   isLoading: true,
-  updateUsername: () => {},
+  updateUsername: () => { },
 });
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
@@ -28,7 +29,7 @@ SplashScreen.preventAutoHideAsync();
 
 function LoadingScreen() {
   const colorScheme = useColorScheme();
-  
+
   return (
     <View style={[
       styles.loadingContainer,
@@ -87,11 +88,13 @@ export default function RootLayout() {
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <AuthContext.Provider value={{ hasUsername, isLoading, updateUsername }}>
-        <Slot />
-        <StatusBar style="auto" />
-        <Toast />
-      </AuthContext.Provider>
+      <LanguageProvider>
+        <AuthContext.Provider value={{ hasUsername, isLoading, updateUsername }}>
+          <Slot />
+          <StatusBar style="auto" />
+          <Toast />
+        </AuthContext.Provider>
+      </LanguageProvider>
     </ThemeProvider>
   );
 }
