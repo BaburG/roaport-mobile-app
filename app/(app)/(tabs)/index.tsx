@@ -3,7 +3,7 @@ import { Image, StyleSheet, FlatList, Text, View, Alert, Dimensions } from 'reac
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { BlurView } from 'expo-blur';
-import { LanguageContext } from '../../languageContext';
+import { LanguageContext } from '@/src/context/LanguageContext';
 
 
 type Score = {

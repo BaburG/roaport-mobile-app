@@ -8,7 +8,7 @@ import TabBarBackground from '@/components/ui/TabBarBackground';
 import { Colors } from '@/constants/Colors';
 import { Ionicons } from '@expo/vector-icons';
 import { useColorScheme } from '@/hooks/useColorScheme';
-import { LanguageContext } from '@/app/languageContext';
+import { LanguageContext } from '../../../src/context/LanguageContext';
 
 export default function TabLayout() {
 

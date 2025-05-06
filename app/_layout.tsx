@@ -1,30 +1,16 @@
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
-import { Slot } from 'expo-router';
+import { Slot, useRouter, useSegments, Redirect } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect, useState, useCallback } from 'react';
-import 'react-native-reanimated';
+import { useEffect, useState } from 'react';
 import { View, ActivityIndicator, StyleSheet, Text } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-
 import { useColorScheme } from '@/hooks/useColorScheme';
 import Toast from 'react-native-toast-message';
 
-// Create a context to share the auth state
-import { createContext } from 'react';
-import { LanguageProvider } from './languageContext';
-export const AuthContext = createContext<{
-  hasUsername: boolean | null;
-  isLoading: boolean;
-  updateUsername: (hasUsername: boolean) => void;
-}>({
-  hasUsername: null,
-  isLoading: true,
-  updateUsername: () => { },
-});
+import { LanguageProvider } from '../src/context/LanguageContext';
+import { AuthProvider, useAuth } from '../src/context/AuthContext';
 
-// Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
 
 function LoadingScreen() {
@@ -46,54 +32,50 @@ function LoadingScreen() {
   );
 }
 
+function AuthGate() {
+  const { isAuthenticated } = useAuth();
+  const segments = useSegments();
+  const [hasMounted, setHasMounted] = useState(false);
+
+  const inAuthGroup = segments[0] === '(auth)';
+
+  useEffect(() => {
+    setHasMounted(true);
+  }, []);
+
+  if (!hasMounted || isAuthenticated === null) {
+    return <LoadingScreen />;
+  }
+
+  return <Slot />;
+}
+
+
 export default function RootLayout() {
   const colorScheme = useColorScheme();
-  const [isLoading, setIsLoading] = useState(true);
-  const [hasUsername, setHasUsername] = useState<boolean | null>(null);
 
   const [fontsLoaded] = useFonts({
     SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
   });
 
-  const updateUsername = useCallback((value: boolean) => {
-    setHasUsername(value);
-  }, []);
-
   useEffect(() => {
-    async function prepare() {
-      try {
-        const username = await AsyncStorage.getItem('username');
-        setHasUsername(!!username);
-      } catch (e) {
-        console.warn(e);
-        setHasUsername(false);
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
-    prepare();
-  }, []);
-
-  useEffect(() => {
-    if (fontsLoaded && !isLoading) {
+    if (fontsLoaded) {
       SplashScreen.hideAsync();
     }
-  }, [fontsLoaded, isLoading]);
+  }, [fontsLoaded]);
 
-  // Show loading screen while determining initial route and loading fonts
-  if (!fontsLoaded || isLoading) {
+  if (!fontsLoaded) {
     return <LoadingScreen />;
   }
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <LanguageProvider>
-        <AuthContext.Provider value={{ hasUsername, isLoading, updateUsername }}>
-          <Slot />
+        <AuthProvider>
+          <AuthGate />
           <StatusBar style="auto" />
           <Toast />
-        </AuthContext.Provider>
+        </AuthProvider>
       </LanguageProvider>
     </ThemeProvider>
   );

@@ -1,18 +1,16 @@
 import { Stack } from 'expo-router';
-import { useContext } from 'react';
-import { AuthContext } from '../_layout';
+import { useAuth } from '@/src/context/AuthContext';
 import { Redirect } from 'expo-router';
 
 export default function AuthLayout() {
-  const { hasUsername, isLoading } = useContext(AuthContext);
+  const { isAuthenticated } = useAuth();
 
-  if (!isLoading && hasUsername) {
+  if (isAuthenticated) {
     return <Redirect href="/(app)/(tabs)" />;
   }
 
   return (
     <Stack screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="username" />
     </Stack>
   );
-} 
+}

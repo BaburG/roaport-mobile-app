@@ -1,18 +1,14 @@
-import { Redirect, Stack } from 'expo-router';
-import { useContext } from 'react';
-import { AuthContext } from '../_layout';
+import { Stack } from 'expo-router';
+import TopBar from '@/components/TopBar';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function AppLayout() {
-  const { hasUsername, isLoading } = useContext(AuthContext);
-
-  // Handle the authentication
-  if (!isLoading && !hasUsername) {
-    return <Redirect href="/(auth)/username" />;
-  }
-
   return (
-    <Stack>
-      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-    </Stack>
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#1F2937' }} edges={['top', 'bottom', 'left', 'right']}>
+      <TopBar />
+      <Stack>
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+      </Stack>
+    </SafeAreaView>
   );
-} 
+}

@@ -11,25 +11,22 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { AuthContext } from '@/app/_layout';
-import { LanguageContext } from '../../languageContext';
+import { useAuth } from '@/src/context/AuthContext'; // 🔥 Doğru import
+import { LanguageContext } from '@/src/context/LanguageContext';
 import DropDownPicker from 'react-native-dropdown-picker';
 
 export default function SettingsScreen() {
   const router = useRouter();
   const colorScheme = useColorScheme();
-  const { updateUsername } = useContext(AuthContext);
+  const { logout } = useAuth(); // AuthContext'ten sadece logout kullanıyoruz
 
-  // LanguageContext'ten locale, setLocale, t fonksiyonunu çekiyoruz
   const { locale, setLocale } = useContext(LanguageContext);
 
-  // Ekran içi state
   const [username, setUsername] = useState<string>('');
 
-  // Dropdown için state’ler
-  const [open, setOpen] = useState<boolean>(false);  // Açık/kapalı
+  const [open, setOpen] = useState<boolean>(false);
   const [value, setValue] = useState<string>(locale);
-  const [items, setItems] = useState<Array<any>>([
+  const [items, setItems] = useState([
     {
       label: 'English',
       value: 'en',
@@ -56,7 +53,6 @@ export default function SettingsScreen() {
     loadUsername();
   }, []);
 
-  // Username'i AsyncStorage’dan alıp state’e koyar
   const loadUsername = async () => {
     try {
       const storedUsername = await AsyncStorage.getItem('username');
@@ -68,7 +64,6 @@ export default function SettingsScreen() {
     }
   };
 
-  // Username değiştirme
   const handleChangeUsername = () => {
     Alert.alert(
       'Change Username',
@@ -81,7 +76,7 @@ export default function SettingsScreen() {
           onPress: async () => {
             try {
               await AsyncStorage.removeItem('username');
-              updateUsername(false);
+              await logout(); // logout çağırıyoruz, çünkü kullanıcı bilgisi resetleniyor
               router.replace('/(auth)/username');
             } catch (error) {
               console.error('Error removing username:', error);
@@ -93,7 +88,6 @@ export default function SettingsScreen() {
     );
   };
 
-  // Account silme
   const handleDeleteAccount = () => {
     Alert.alert(
       'Delete Account',
@@ -106,7 +100,7 @@ export default function SettingsScreen() {
           onPress: async () => {
             try {
               await AsyncStorage.removeItem('username');
-              updateUsername(false);
+              await logout(); // Hesap silindiğinde de logout yapıyoruz
               router.replace('/(auth)/username');
             } catch (error) {
               console.error('Error deleting account:', error);
@@ -178,7 +172,7 @@ export default function SettingsScreen() {
             setItems={setItems}
             onChangeValue={(selectedVal) => {
               console.log('Selected dropdown value:', selectedVal);
-              setLocale(selectedVal);
+              setLocale(selectedVal!);
             }}
             style={{
               borderColor: '#ccc',
@@ -197,13 +191,8 @@ export default function SettingsScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  content: {
-    flex: 1,
-    padding: 16,
-  },
+  container: { flex: 1 },
+  content: { flex: 1, padding: 16 },
   card: {
     padding: 16,
     borderRadius: 12,
@@ -213,38 +202,16 @@ const styles = StyleSheet.create({
     shadowRadius: 3,
     elevation: 3,
   },
-  label: {
-    fontSize: 14,
-    marginBottom: 4,
-  },
-  username: {
-    fontSize: 24,
-    fontWeight: 'bold',
-  },
-  buttonContainer: {
-    marginTop: 24,
-    gap: 12,
-  },
-  button: {
-    padding: 16,
-    borderRadius: 12,
-    alignItems: 'center',
-  },
-  changeButton: {
-    backgroundColor: '#2563EB',
-  },
+  label: { fontSize: 14, marginBottom: 4 },
+  username: { fontSize: 24, fontWeight: 'bold' },
+  buttonContainer: { marginTop: 24, gap: 12 },
+  button: { padding: 16, borderRadius: 12, alignItems: 'center' },
+  changeButton: { backgroundColor: '#2563EB' },
   deleteButton: {
     backgroundColor: '#FEE2E2',
     borderWidth: 2,
     borderColor: '#DC2626',
   },
-  buttonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  deleteButtonText: {
-    color: '#DC2626',
-  },
+  buttonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
+  deleteButtonText: { color: '#DC2626' },
 });
-

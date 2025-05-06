@@ -9,7 +9,7 @@ import { useColorScheme } from '@/hooks/useColorScheme';
 import { SuccessAnimation } from '@/components/SuccessAnimation';
 import * as Location from 'expo-location';
 import { useRouter } from 'expo-router';
-import { LanguageContext } from '@/app/languageContext';
+import { LanguageContext } from '@/src/context/LanguageContext';
 
 
 
