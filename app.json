@@ -2,10 +2,10 @@
   "expo": {
     "name": "Roaport Mobile App",
     "slug": "roaport-mobile-app",
-    "version": "1.0.0",
+    "version": "1.0.2",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "myapp",
+    "scheme": "roaport",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
