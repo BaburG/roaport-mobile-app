@@ -1,3 +1,4 @@
+import React from 'react';
 import { CameraView, useCameraPermissions, FlashMode, Camera } from 'expo-camera';
 import { useRef, useState, useEffect, useContext } from 'react';
 import { ActivityIndicator, Image, StyleSheet, Text, TextInput, TouchableOpacity, View, Modal, ScrollView, Alert } from 'react-native';
@@ -10,11 +11,12 @@ import { SuccessAnimation } from '@/components/SuccessAnimation';
 import * as Location from 'expo-location';
 import { useRouter } from 'expo-router';
 import { LanguageContext } from '@/src/context/LanguageContext';
-
-
+import { useAuth } from '@/src/context/AuthContext';
 
 export default function ReportScreen() {
+  const { user, anonymousId } = useAuth();
   const [uploading, setUploading] = useState<boolean>(false);
+  const [isCapturing, setIsCapturing] = useState<boolean>(false);
   const [permission, requestPermission] = useCameraPermissions();
   const cameraRef = useRef<CameraView>(null);
   const [photoUri, setPhotoUri] = useState<string | null>(null);
@@ -68,6 +70,9 @@ export default function ReportScreen() {
   }
 
   const takePicture = async () => {
+    if (isCapturing) return;
+    
+    setIsCapturing(true);
     if (cameraRef.current) {
       try {
         const location = await Location.getCurrentPositionAsync({});
@@ -90,6 +95,8 @@ export default function ReportScreen() {
           text1: 'Error',
           text2: 'Failed to capture location',
         });
+      } finally {
+        setIsCapturing(false);
       }
     }
   };
@@ -126,29 +133,6 @@ export default function ReportScreen() {
     setUploading(true);
 
     try {
-      const storedUsername = await AsyncStorage.getItem('username');
-      if (!storedUsername) {
-        Alert.alert(
-          'No Username Found',
-          'Please set your username in the settings before submitting a report.',
-          [
-            {
-              text: 'Go to Settings',
-              onPress: () => {
-                handleBack();
-                router.push('/(tabs)/settings');
-              },
-              style: 'default',
-            },
-            {
-              text: 'Cancel',
-              style: 'cancel',
-            },
-          ]
-        );
-        return;
-      }
-
       const formData = new FormData();
       formData.append('file', {
         uri: photoUri,
@@ -156,8 +140,9 @@ export default function ReportScreen() {
         type: 'image/jpeg',
       } as any);
 
-      formData.append('username', storedUsername);
-      formData.append('name', storedUsername);
+      const identifier = user ? user.username || `${user.firstName} ${user.lastName}` : (anonymousId || 'anonymous');
+      formData.append('username', identifier);
+      formData.append('name', identifier);
       formData.append('description', description || 'No description provided');
       formData.append('type', selectedType);
 
@@ -260,9 +245,17 @@ export default function ReportScreen() {
             <View style={styles.captureContainer}>
               <TouchableOpacity
                 onPress={takePicture}
-                style={styles.captureButton}
+                style={[
+                  styles.captureButton,
+                  isCapturing && styles.captureButtonDisabled
+                ]}
+                disabled={isCapturing}
               >
-                <View style={styles.captureInner} />
+                {isCapturing ? (
+                  <ActivityIndicator color="#fff" size="large" />
+                ) : (
+                  <View style={styles.captureInner} />
+                )}
               </TouchableOpacity>
             </View>
           </CameraView>
@@ -418,6 +411,9 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.3)',
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  captureButtonDisabled: {
+    backgroundColor: 'rgba(255,255,255,0.1)',
   },
   captureInner: {
     width: 60,
