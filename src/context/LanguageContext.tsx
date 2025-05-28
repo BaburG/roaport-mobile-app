@@ -1,6 +1,7 @@
 import React, { createContext, useState, useEffect, ReactNode } from 'react';
 import { I18n } from 'i18n-js';
 import * as Localization from 'expo-localization';
+import { View, ActivityIndicator } from 'react-native';
 
 const i18n = new I18n({
     en: {
@@ -79,37 +80,68 @@ const i18n = new I18n({
     },
 });
 
-i18n.fallbacks = true;
-const deviceLang = Localization.locale.split('-')[0];
-i18n.locale = deviceLang;
+// Initialize with English as fallback
+i18n.enableFallback = true;
 
 interface ILanguageContext {
     locale: string;
-    setLocale: React.Dispatch<React.SetStateAction<string>>;
+    setLocale: (locale: string) => void;
     t: (key: string) => string;
+    isReady: boolean;
 }
 
-export const LanguageContext = createContext<ILanguageContext>({
-    locale: deviceLang,
+const defaultContext: ILanguageContext = {
+    locale: 'en',
     setLocale: () => { },
     t: (key: string) => key,
-});
+    isReady: true,
+};
+
+export const LanguageContext = createContext<ILanguageContext>(defaultContext);
+
+export function useLanguage() {
+    const context = React.useContext(LanguageContext);
+    if (context === undefined) {
+        throw new Error('useLanguage must be used within a LanguageProvider');
+    }
+    return context;
+}
 
 interface LanguageProviderProps {
     children: ReactNode;
 }
 
 export function LanguageProvider({ children }: LanguageProviderProps) {
-    const [locale, setLocale] = useState<string>(deviceLang);
+    const [locale, setLocaleState] = useState<string>('en');
 
+    // Initialize with device language
     useEffect(() => {
-        i18n.locale = locale;
-    }, [locale]);
+        const deviceLang = Localization.getLocales()[0]?.languageCode ?? 'en';
+        if (deviceLang !== locale) {
+            setLocaleState(deviceLang);
+            i18n.locale = deviceLang;
+        }
+    }, []);
+
+    const setLocale = (newLocale: string) => {
+        if (newLocale !== locale) {
+            setLocaleState(newLocale);
+            i18n.locale = newLocale;
+        }
+    };
 
     const value: ILanguageContext = {
         locale,
         setLocale,
-        t: (key: string) => i18n.t(key),
+        t: (key: string) => {
+            try {
+                return i18n.t(key);
+            } catch (error) {
+                console.error('Translation error:', error);
+                return key;
+            }
+        },
+        isReady: true,
     };
 
     return (
