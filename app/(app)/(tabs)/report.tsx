@@ -1,5 +1,5 @@
 import { CameraView, useCameraPermissions, FlashMode, Camera } from 'expo-camera';
-import { useRef, useState, useEffect } from 'react';
+import { useRef, useState, useEffect, useContext } from 'react';
 import { ActivityIndicator, Image, StyleSheet, Text, TextInput, TouchableOpacity, View, Modal, ScrollView, Alert } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -9,13 +9,9 @@ import { useColorScheme } from '@/hooks/useColorScheme';
 import { SuccessAnimation } from '@/components/SuccessAnimation';
 import * as Location from 'expo-location';
 import { useRouter } from 'expo-router';
+import { LanguageContext } from '@/src/context/LanguageContext';
 
-const REPORT_TYPES = [
-  { id: 'Pothole', label: 'Pothole', description: 'Report damaged road surface' },
-  { id: 'Sign', label: 'Traffic Sign', description: 'Report issues with traffic signs' },
-  { id: 'Sidewalk', label: 'Sidewalk', description: 'Report sidewalk problems' },
-  { id: 'None', label: 'Other', description: 'Report other road issues' },
-];
+
 
 export default function ReportScreen() {
   const [uploading, setUploading] = useState<boolean>(false);
@@ -31,6 +27,14 @@ export default function ReportScreen() {
   const [location, setLocation] = useState<{ latitude: number; longitude: number } | null>(null);
   const router = useRouter();
   const [flashMode, setFlashMode] = useState<boolean>(false);
+  const { t } = useContext(LanguageContext);
+
+  const REPORT_TYPES = [
+    { id: 'Pothole', label: t('report.pothole.title'), description: t('report.pothole.description') },
+    { id: 'Sign', label: t('report.trafficSign.title'), description: t('report.trafficSign.description') },
+    { id: 'Sidewalk', label: t('report.sidewalk.title'), description: t('report.sidewalk.description') },
+    { id: 'None', label: t('report.other.title'), description: t('report.other.description') },
+  ];
 
   useEffect(() => {
     (async () => {
@@ -242,15 +246,15 @@ export default function ReportScreen() {
             ref={cameraRef}
             facing="back"
           >
-            <View style={{display: 'flex', justifyContent: 'flex-end', flexDirection: 'row', zIndex: 2}}>
-            <TouchableOpacity
+            <View style={{ display: 'flex', justifyContent: 'flex-end', flexDirection: 'row', zIndex: 2 }}>
+              <TouchableOpacity
                 onPress={changeFlashMode}
               >
-                <Ionicons style={{marginRight: 20, marginTop: 20}}
-                    name={!flashMode ? "flash-outline" : "flash-off-outline"}
-                    size={28}
-                    color={colorScheme === 'dark' ? '#fff' : '#1F2937'}
-                  />
+                <Ionicons style={{ marginRight: 20, marginTop: 20 }}
+                  name={!flashMode ? "flash-outline" : "flash-off-outline"}
+                  size={28}
+                  color={colorScheme === 'dark' ? '#fff' : '#1F2937'}
+                />
               </TouchableOpacity>
             </View>
             <View style={styles.captureContainer}>
@@ -314,7 +318,7 @@ export default function ReportScreen() {
                     styles.sectionTitle,
                     { color: colorScheme === 'dark' ? '#fff' : '#1F2937' }
                   ]}>
-                    What do you want to report?
+                    {t('report.reportQuestion')}
                   </Text>
 
                   {renderTypeButtons()}
@@ -323,7 +327,7 @@ export default function ReportScreen() {
                     styles.sectionTitle,
                     { color: colorScheme === 'dark' ? '#fff' : '#1F2937' }
                   ]}>
-                    Additional Details (Optional)
+                    {t('report.additionalDetails.title')}
                   </Text>
                   <TextInput
                     style={[
@@ -333,7 +337,7 @@ export default function ReportScreen() {
                         color: colorScheme === 'dark' ? '#fff' : '#1F2937'
                       }
                     ]}
-                    placeholder="Describe the issue in more detail..."
+                    placeholder={t('report.additionalDetails.placeholder')}
                     placeholderTextColor={colorScheme === 'dark' ? '#9CA3AF' : '#6B7280'}
                     value={description}
                     onChangeText={setDescription}
@@ -348,7 +352,7 @@ export default function ReportScreen() {
                       disabled={uploading}
                     >
                       <Ionicons name="camera-reverse" size={24} color="#fff" />
-                      <Text style={styles.actionButtonText}>Retake</Text>
+                      <Text style={styles.actionButtonText}>{t('report.buttons.retake')}</Text>
                     </TouchableOpacity>
 
                     <TouchableOpacity
@@ -362,7 +366,7 @@ export default function ReportScreen() {
                         <Ionicons name="cloud-upload" size={24} color="#fff" />
                       )}
                       <Text style={styles.actionButtonText}>
-                        {uploading ? 'Submitting...' : 'Submit Report'}
+                        {uploading ? 'Submitting...' : t('report.buttons.submit')}
                       </Text>
                     </TouchableOpacity>
                   </View>

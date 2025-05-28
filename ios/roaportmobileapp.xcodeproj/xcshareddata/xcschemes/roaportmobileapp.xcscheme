@@ -15,9 +15,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "13B07F861A680F5B00A75B9A"
-               BuildableName = "roaportmobileapp.app"
-               BlueprintName = "roaportmobileapp"
-               ReferencedContainer = "container:roaportmobileapp.xcodeproj">
+               BuildableName = "RoaportMobileApp.app"
+               BlueprintName = "RoaportMobileApp"
+               ReferencedContainer = "container:RoaportMobileApp.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -33,9 +33,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "00E356ED1AD99517003FC87E"
-               BuildableName = "roaportmobileappTests.xctest"
-               BlueprintName = "roaportmobileappTests"
-               ReferencedContainer = "container:roaportmobileapp.xcodeproj">
+               BuildableName = "RoaportMobileAppTests.xctest"
+               BlueprintName = "RoaportMobileAppTests"
+               ReferencedContainer = "container:RoaportMobileApp.xcodeproj">
             </BuildableReference>
          </TestableReference>
       </Testables>
@@ -55,9 +55,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "13B07F861A680F5B00A75B9A"
-            BuildableName = "roaportmobileapp.app"
-            BlueprintName = "roaportmobileapp"
-            ReferencedContainer = "container:roaportmobileapp.xcodeproj">
+            BuildableName = "RoaportMobileApp.app"
+            BlueprintName = "RoaportMobileApp"
+            ReferencedContainer = "container:RoaportMobileApp.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </LaunchAction>
@@ -72,9 +72,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "13B07F861A680F5B00A75B9A"
-            BuildableName = "roaportmobileapp.app"
-            BlueprintName = "roaportmobileapp"
-            ReferencedContainer = "container:roaportmobileapp.xcodeproj">
+            BuildableName = "RoaportMobileApp.app"
+            BlueprintName = "RoaportMobileApp"
+            ReferencedContainer = "container:RoaportMobileApp.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>

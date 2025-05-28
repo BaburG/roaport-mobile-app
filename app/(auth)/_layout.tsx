@@ -1,18 +1,22 @@
 import { Stack } from 'expo-router';
-import { useContext } from 'react';
-import { AuthContext } from '../_layout';
-import { Redirect } from 'expo-router';
+import { View, ActivityIndicator } from 'react-native';
+import { useLanguage } from '../../src/context/LanguageContext';
 
 export default function AuthLayout() {
-  const { hasUsername, isLoading } = useContext(AuthContext);
+  const { isReady } = useLanguage();
 
-  if (!isLoading && hasUsername) {
-    return <Redirect href="/(app)/(tabs)" />;
+  if (!isReady) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <ActivityIndicator size="large" />
+      </View>
+    );
   }
 
   return (
     <Stack screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="username" />
+      <Stack.Screen name="login" />
+      <Stack.Screen name="register" />
     </Stack>
   );
-} 
+}

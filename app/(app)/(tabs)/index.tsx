@@ -1,8 +1,11 @@
-import React, { useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { Image, StyleSheet, FlatList, Text, View, Alert, Dimensions } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { BlurView } from 'expo-blur';
+import { LanguageContext } from '@/src/context/LanguageContext';
+import { useAuth } from '@/src/context/AuthContext';
+
 
 type Score = {
   username: string;
@@ -13,9 +16,12 @@ const HEADER_HEIGHT = 250;
 const { width } = Dimensions.get('window');
 
 export default function HomeScreen() {
+  const { isAuthenticated, user, logout } = useAuth();
   const colorScheme = useColorScheme();
   const [scores, setScores] = useState<Score[]>([]);
   const [username, setUsername] = useState<string>('');
+  const { t } = useContext(LanguageContext);
+  
 
   // Load username on mount
   useEffect(() => {
@@ -53,7 +59,7 @@ export default function HomeScreen() {
         style={styles.reactLogo}
       />
       <BlurView intensity={80} style={styles.welcomeOverlay}>
-        <Text style={styles.welcomeText}>Welcome back,</Text>
+        <Text style={styles.welcomeText}>{t('welcomeBack')}</Text>
         <Text style={styles.usernameText}>{username}!</Text>
       </BlurView>
     </View>
@@ -79,7 +85,7 @@ export default function HomeScreen() {
           </Text>
         )}
       </View>
-      
+
       <View style={styles.userInfoContainer}>
         <Text style={[
           styles.username,
@@ -88,7 +94,7 @@ export default function HomeScreen() {
           {item.username}
         </Text>
       </View>
-      
+
       <View style={styles.scoreContainer}>
         <Text style={[
           styles.score,
@@ -113,7 +119,7 @@ export default function HomeScreen() {
               styles.scoreboardTitle,
               { color: colorScheme === 'dark' ? '#fff' : '#1F2937' }
             ]}>
-              Top Players
+              {t('topPlayers')}
             </Text>
           </View>
         </>
