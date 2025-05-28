@@ -8,6 +8,7 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
+  ActivityIndicator,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
@@ -19,7 +20,13 @@ export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
   const { handleLogin } = useLogin();
+
+  const onLogin = async () => {
+    setError('');
+    await handleLogin(email, password, setLoading);
+  };
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -36,33 +43,68 @@ export default function LoginScreen() {
         <Text style={styles.title}>Welcome Back</Text>
         <Text style={styles.subtitle}>Log in to your account</Text>
 
+        {error ? (
+          <View style={styles.errorContainer}>
+            <Text style={styles.errorText}>{error}</Text>
+          </View>
+        ) : null}
+
         <TextInput
-          style={styles.input}
+          style={[
+            styles.input,
+            error && styles.inputError
+          ]}
           placeholder="Email"
           keyboardType="email-address"
           autoCapitalize="none"
           value={email}
-          onChangeText={setEmail}
+          onChangeText={(text) => {
+            setEmail(text);
+            setError('');
+          }}
+          editable={!loading}
         />
 
         <TextInput
-          style={styles.input}
+          style={[
+            styles.input,
+            error && styles.inputError
+          ]}
           placeholder="Password"
           secureTextEntry
           value={password}
-          onChangeText={setPassword}
+          onChangeText={(text) => {
+            setPassword(text);
+            setError('');
+          }}
+          editable={!loading}
         />
 
         <TouchableOpacity
-          style={[styles.button, loading && { backgroundColor: '#9CA3AF' }]}
-          onPress={() => handleLogin(email, password)}
+          style={[
+            styles.button,
+            loading && styles.buttonDisabled
+          ]}
+          onPress={onLogin}
           disabled={loading}
         >
-          <Text style={styles.buttonText}>{loading ? 'Logging in...' : 'Login'}</Text>
+          {loading ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text style={styles.buttonText}>Login</Text>
+          )}
         </TouchableOpacity>
 
-        <TouchableOpacity onPress={() => router.replace('/register')}>
-          <Text style={styles.switchText}>Don't have an account? Register</Text>
+        <TouchableOpacity 
+          onPress={() => router.replace('/register')}
+          disabled={loading}
+        >
+          <Text style={[
+            styles.switchText,
+            loading && styles.switchTextDisabled
+          ]}>
+            Don't have an account? Register
+          </Text>
         </TouchableOpacity>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -98,6 +140,17 @@ const styles = StyleSheet.create({
     color: '#6B7280',
     marginBottom: 32,
   },
+  errorContainer: {
+    backgroundColor: '#FEE2E2',
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 16,
+  },
+  errorText: {
+    color: '#DC2626',
+    fontSize: 14,
+    textAlign: 'center',
+  },
   input: {
     borderWidth: 1,
     borderColor: '#D1D5DB',
@@ -108,12 +161,20 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     backgroundColor: '#fff',
   },
+  inputError: {
+    borderColor: '#DC2626',
+  },
   button: {
     backgroundColor: '#2563EB',
     padding: 16,
     borderRadius: 12,
     alignItems: 'center',
     marginBottom: 16,
+    minHeight: 52,
+    justifyContent: 'center',
+  },
+  buttonDisabled: {
+    backgroundColor: '#9CA3AF',
   },
   buttonText: {
     color: '#fff',
@@ -124,5 +185,8 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     color: '#2563EB',
     marginTop: 12,
+  },
+  switchTextDisabled: {
+    color: '#9CA3AF',
   },
 });

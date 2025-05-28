@@ -4,6 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { BlurView } from 'expo-blur';
 import { LanguageContext } from '@/src/context/LanguageContext';
+import { useAuth } from '@/src/context/AuthContext';
 
 
 type Score = {
@@ -15,11 +16,12 @@ const HEADER_HEIGHT = 250;
 const { width } = Dimensions.get('window');
 
 export default function HomeScreen() {
+  const { isAuthenticated, user, logout } = useAuth();
   const colorScheme = useColorScheme();
   const [scores, setScores] = useState<Score[]>([]);
   const [username, setUsername] = useState<string>('');
   const { t } = useContext(LanguageContext);
-
+  
 
   // Load username on mount
   useEffect(() => {

@@ -1,21 +1,22 @@
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
-import { Slot, useRouter, useSegments, Redirect } from 'expo-router';
+import { Slot, Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
 import { View, ActivityIndicator, StyleSheet, Text } from 'react-native';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import Toast from 'react-native-toast-message';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { LanguageProvider } from '../src/context/LanguageContext';
-import { AuthProvider, useAuth } from '../src/context/AuthContext';
+import { AuthProvider } from '../src/context/AuthContext';
 
 SplashScreen.preventAutoHideAsync();
 
 function LoadingScreen() {
   const colorScheme = useColorScheme();
-
+  
   return (
     <View style={[
       styles.loadingContainer,
@@ -32,28 +33,8 @@ function LoadingScreen() {
   );
 }
 
-function AuthGate() {
-  const { isAuthenticated } = useAuth();
-  const segments = useSegments();
-  const [hasMounted, setHasMounted] = useState(false);
-
-  const inAuthGroup = segments[0] === '(auth)';
-
-  useEffect(() => {
-    setHasMounted(true);
-  }, []);
-
-  if (!hasMounted || isAuthenticated === null) {
-    return <LoadingScreen />;
-  }
-
-  return <Slot />;
-}
-
-
-export default function RootLayout() {
+function RootLayoutContent() {
   const colorScheme = useColorScheme();
-
   const [fontsLoaded] = useFonts({
     SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
   });
@@ -69,16 +50,24 @@ export default function RootLayout() {
   }
 
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <LanguageProvider>
-        <AuthProvider>
-          <AuthGate />
-          <StatusBar style="auto" />
-          <Toast />
-        </AuthProvider>
-      </LanguageProvider>
-    </ThemeProvider>
+    <SafeAreaProvider>
+      <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+        <LanguageProvider>
+          <AuthProvider>
+            <Stack screenOptions={{ headerShown: false }}>
+              <Slot />
+            </Stack>
+            <StatusBar style="auto" />
+            <Toast />
+          </AuthProvider>
+        </LanguageProvider>
+      </ThemeProvider>
+    </SafeAreaProvider>
   );
+}
+
+export default function RootLayout() {
+  return <RootLayoutContent />;
 }
 
 const styles = StyleSheet.create({

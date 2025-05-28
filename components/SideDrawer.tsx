@@ -2,7 +2,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Dimensions, TouchableWithoutF
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { useEffect } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useAuth } from '@/src/context/AuthContext'; // 👈 ekliyoruz
+import { useAuth } from '@/src/context/AuthContext';
 import { useRouter } from 'expo-router';
 
 interface SideDrawerProps {
