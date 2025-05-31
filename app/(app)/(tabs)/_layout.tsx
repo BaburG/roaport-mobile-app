@@ -29,10 +29,6 @@ export default function TabLayout() {
       screenOptions={{
         tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
         tabBarInactiveTintColor: colorScheme === 'dark' ? '#9CA3AF' : '#6B7280',
-        tabBarStyle: {
-          backgroundColor: colorScheme === 'dark' ? '#1F2937' : '#fff',
-          borderTopColor: colorScheme === 'dark' ? '#374151' : '#E5E7EB',
-        },
         headerStyle: {
           backgroundColor: colorScheme === 'dark' ? '#1F2937' : '#fff',
         },
@@ -43,8 +39,13 @@ export default function TabLayout() {
         tabBarStyle: Platform.select({
           ios: {
             position: 'absolute',
+            backgroundColor: colorScheme === 'dark' ? '#1F2937' : '#fff',
+            borderTopColor: colorScheme === 'dark' ? '#374151' : '#E5E7EB',
           },
-          default: {},
+          default: {
+            backgroundColor: colorScheme === 'dark' ? '#1F2937' : '#fff',
+            borderTopColor: colorScheme === 'dark' ? '#374151' : '#E5E7EB',
+          },
         }),
       }}>
       <Tabs.Screen
@@ -61,6 +62,15 @@ export default function TabLayout() {
           tabBarIcon: ({ color }) => <Ionicons size={28} name="camera" color={color} />,
         }}
       />
+      {isAuthenticated && (
+        <Tabs.Screen
+          name="notifications"
+          options={{
+            title: t('navigation.notifications'),
+            tabBarIcon: ({ color }) => <Ionicons size={28} name="notifications-outline" color={color} />,
+          }}
+        />
+      )}
       {isAuthenticated && (
         <Tabs.Screen
           name="map"
