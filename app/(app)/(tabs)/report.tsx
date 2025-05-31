@@ -140,7 +140,7 @@ export default function ReportScreen() {
         type: 'image/jpeg',
       } as any);
 
-      const identifier = user ? user.username || `${user.firstName} ${user.lastName}` : (anonymousId || 'anonymous');
+      const identifier = user ? user.id : (anonymousId || 'anonymous');
       formData.append('username', identifier);
       formData.append('name', identifier);
       formData.append('description', description || 'No description provided');
@@ -152,7 +152,7 @@ export default function ReportScreen() {
 
       console.log('Form data:', formData);
 
-      const response = await fetch('https://roaport-upload-backend.thankfulpond-dc02f385.italynorth.azurecontainerapps.io/upload/', {
+      const response = await fetch('https://upload.roaport.com/upload/', {
         method: 'POST',
         headers: {
           'Content-Type': 'multipart/form-data',
