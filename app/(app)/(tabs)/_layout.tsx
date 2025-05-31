@@ -51,8 +51,8 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: t('navigation.home'),
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
+          title: t('navigation.notifications'),
+          tabBarIcon: ({ color }) => <Ionicons size={28} name="notifications-outline" color={color} />,
         }}
       />
       <Tabs.Screen
@@ -62,15 +62,6 @@ export default function TabLayout() {
           tabBarIcon: ({ color }) => <Ionicons size={28} name="camera" color={color} />,
         }}
       />
-      {isAuthenticated && (
-        <Tabs.Screen
-          name="notifications"
-          options={{
-            title: t('navigation.notifications'),
-            tabBarIcon: ({ color }) => <Ionicons size={28} name="notifications-outline" color={color} />,
-          }}
-        />
-      )}
       {isAuthenticated && (
         <Tabs.Screen
           name="map"
