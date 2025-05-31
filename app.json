@@ -15,7 +15,8 @@
         "NSLocationWhenInUseUsageDescription": "This app needs access to location when open to mark the location of reported issues.",
         "NSLocationAlwaysUsageDescription": "This app needs access to location when in the background to mark the location of reported issues.",
         "NSLocationAlwaysAndWhenInUseUsageDescription": "This app needs access to location to mark the location of reported issues.",
-        "NSCameraUsageDescription": "This app needs access to the camera to take photos of road issues."
+        "NSCameraUsageDescription": "This app needs access to the camera to take photos of road issues.",
+        "UIBackgroundModes": ["remote-notification"]
       }
     },
     "android": {
@@ -27,9 +28,12 @@
         "android.permission.CAMERA",
         "android.permission.ACCESS_FINE_LOCATION",
         "android.permission.ACCESS_COARSE_LOCATION",
-        "android.permission.RECORD_AUDIO"
+        "android.permission.RECORD_AUDIO",
+        "android.permission.RECEIVE_BOOT_COMPLETED",
+        "android.permission.VIBRATE"
       ],
-      "package": "com.anonymous.roaportmobileapp"
+      "package": "com.anonymous.roaportmobileapp",
+      "googleServicesFile": "./google-services.json"
     },
     "web": {
       "bundler": "metro",
@@ -60,6 +64,19 @@
         "expo-camera",
         {
           "cameraPermission": "Allow $(PRODUCT_NAME) to access your camera to take photos of road issues."
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/adaptive-icon.png",
+          "color": "#ffffff"
+        }
+      ],
+      [
+        "@react-native-firebase/app",
+        {
+          "googleServicesFile": "./google-services.json"
         }
       ]
     ],
