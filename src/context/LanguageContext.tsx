@@ -12,6 +12,8 @@ const i18n = new I18n({
             home: 'Home',
             report: 'Report',
             notifications: 'Notifications',
+            map: 'Map',
+            myReports: 'My Reports',
             settings: 'Settings'
         },
         notifications: {
@@ -114,6 +116,8 @@ const i18n = new I18n({
             home: 'Anasayfa',
             report: 'Raporla',
             notifications: 'Bildirimler',
+            map: 'Harita',
+            myReports: 'Raporlarım',
             settings: 'Ayarlar'
         },
         notifications: {

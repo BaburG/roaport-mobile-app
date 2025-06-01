@@ -29,6 +29,20 @@ export default function TabLayout() {
       screenOptions={{
         tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
         tabBarInactiveTintColor: colorScheme === 'dark' ? '#9CA3AF' : '#6B7280',
+        tabBarStyle: Platform.select({
+          ios: {
+            position: 'absolute',
+            backgroundColor: colorScheme === 'dark' ? '#1F2937' : '#fff',
+            borderTopColor: colorScheme === 'dark' ? '#374151' : '#E5E7EB',
+            height: 88,
+            paddingBottom: 20,
+          },
+          default: {
+            backgroundColor: colorScheme === 'dark' ? '#1F2937' : '#fff',
+            borderTopColor: colorScheme === 'dark' ? '#374151' : '#E5E7EB',
+            height: 60,
+          },
+        }),
         headerStyle: {
           backgroundColor: colorScheme === 'dark' ? '#1F2937' : '#fff',
         },
@@ -59,23 +73,34 @@ export default function TabLayout() {
         name="report"
         options={{
           title: t('navigation.report'),
-          tabBarIcon: ({ color }) => <Ionicons size={28} name="camera" color={color} />,
+          tabBarIcon: ({ color }) => <Ionicons size={24} name="camera" color={color} />,
         }}
       />
-      {isAuthenticated && (
-        <Tabs.Screen
-          name="map"
-          options={{
-            title: 'Map',
-            tabBarIcon: ({ color }) => <Ionicons size={28} name="map" color={color} />,
-          }}
-        />
-      )}
+      <Tabs.Screen
+        name="map"
+        options={{
+          title: t('navigation.map'),
+          tabBarIcon: ({ color }) => <Ionicons size={24} name="map-outline" color={color} />,
+          tabBarStyle: {
+            display: isAuthenticated ? 'flex' : 'none',
+          },
+        }}
+      />
+      <Tabs.Screen
+        name="my-reports"
+        options={{
+          title: t('navigation.myReports'),
+          tabBarIcon: ({ color }) => <Ionicons size={24} name="document-text-outline" color={color} />,
+          tabBarStyle: {
+            display: isAuthenticated ? 'flex' : 'none',
+          },
+        }}
+      />
       <Tabs.Screen
         name="settings"
         options={{
           title: t('navigation.settings'),
-          tabBarIcon: ({ color }) => <Ionicons size={28} name="settings-outline" color={color} />,
+          tabBarIcon: ({ color }) => <Ionicons size={24} name="settings-outline" color={color} />,
         }}
       />
     </Tabs>
