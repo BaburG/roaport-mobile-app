@@ -46,6 +46,13 @@ interface NotificationSettings {
   volume: number;
 }
 
+interface AlertNotification {
+  id: string;
+  post: Post;
+  distance: number;
+  timestamp: number;
+}
+
 const MOCK_DATA: Post[] = [
   {
     "id": "29",
@@ -85,14 +92,6 @@ const MOCK_DATA: Post[] = [
   }
 ];
 
-const NOTIFICATION_TONES = [
-  { label: 'Default Beep', value: 'default' },
-  { label: 'Alert Chime', value: 'alert' },
-  { label: 'Bell Ring', value: 'bell' },
-  { label: 'Warning Buzzer', value: 'warning' },
-  { label: 'Gentle Ping', value: 'ping' },
-];
-
 // Sound mappings - you can replace these with actual sound files
 // For built-in sounds, you have several options:
 // 1. Use system sounds (vibration + haptics) - Already implemented
@@ -112,7 +111,7 @@ const SOUND_MAP = {
 
 export default function NotificationsScreen() {
   const colorScheme = useColorScheme();
-  const { t } = useContext(LanguageContext);
+  const { t, interpolate } = useContext(LanguageContext);
   
   const [settings, setSettings] = useState<NotificationSettings>({
     isActive: false,
@@ -132,8 +131,25 @@ export default function NotificationsScreen() {
   const [tempTone, setTempTone] = useState<string>(settings.tone);
   const [isTestingSound, setIsTestingSound] = useState(false);
 
+  // Notification system
+  const [currentNotification, setCurrentNotification] = useState<AlertNotification | null>(null);
+  const [isNotificationVisible, setIsNotificationVisible] = useState(false);
+  const notificationOpacity = useRef(new Animated.Value(0)).current;
+  const notificationTranslateY = useRef(new Animated.Value(-100)).current;
+
+  // Nearest hazard tracking
+  const [nearestHazard, setNearestHazard] = useState<{ post: Post; distance: number } | null>(null);
+
   const locationWatchRef = useRef<Location.LocationSubscription | null>(null);
   const animatedScale = useRef(new Animated.Value(1)).current;
+
+  const NOTIFICATION_TONES = [
+    { label: t('notifications.tones.default'), value: 'default' },
+    { label: t('notifications.tones.alert'), value: 'alert' },
+    { label: t('notifications.tones.bell'), value: 'bell' },
+    { label: t('notifications.tones.warning'), value: 'warning' },
+    { label: t('notifications.tones.ping'), value: 'ping' },
+  ];
 
   useEffect(() => {
     loadSettings();
@@ -156,6 +172,7 @@ export default function NotificationsScreen() {
     if (userLocation && settings.isActive) {
       checkProximityAlerts();
       checkForLocationUpdate();
+      updateNearestHazard();
     }
   }, [userLocation, posts, settings]);
 
@@ -227,14 +244,42 @@ export default function NotificationsScreen() {
 
   const fetchNearbyPosts = async (latitude: number, longitude: number) => {
     try {
-      // For now, using mock data instead of API call
-      // const response = await fetch(`${API_URL}/posts?lat=${latitude}&lon=${longitude}&verified=${settings.verified}&maxDistance=${settings.range}`);
-      // const data = await response.json();
+      //console.log(`Making API call to: ${API_URL}/api/posts?lat=${latitude}&lon=${longitude}&verified=${settings.verified}&maxDistance=${settings.range}`);
       
-      setPosts(MOCK_DATA);
+      const response = await fetch(`${API_URL}/api/posts?lat=${latitude}&lon=${longitude}&verified=${settings.verified}&maxDistance=${settings.range}`);
+      
+      //console.log('Response status:', response.status);
+      //console.log('Response headers:', response.headers);
+      
+      // Get the raw response text first
+      const responseText = await response.text();
+      //console.log('Raw response:', responseText);
+      
+      // Check if response is ok
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}, response: ${responseText}`);
+      }
+      
+      // Try to parse as JSON
+      let data;
+      try {
+        data = JSON.parse(responseText);
+        //console.log('Parsed JSON data:', data);
+      } catch (parseError) {
+        //console.error('Failed to parse JSON:', parseError);
+        //console.log('Response was not valid JSON, using mock data');
+        setPosts(MOCK_DATA);
+        setLastFetchLocation({ latitude, longitude });
+        return;
+      }
+      
+      // Use the data
+      setPosts(data.data || data); // Handle both data.data and direct data structures
       setLastFetchLocation({ latitude, longitude });
+      
     } catch (error) {
-      console.error('Error fetching posts:', error);
+      //console.error('Error fetching posts:', error);
+      //console.log('Falling back to mock data');
       // Fallback to mock data
       setPosts(MOCK_DATA);
       setLastFetchLocation({ latitude, longitude });
@@ -298,6 +343,24 @@ export default function NotificationsScreen() {
     setIsTestingSound(true);
     await playNotificationSound(settings.tone);
     setTimeout(() => setIsTestingSound(false), 500);
+  };
+
+  const testNotification = async () => {
+    // Create a mock notification
+    const mockPost: Post = {
+      id: 'test',
+      name: 'Test User',
+      imageUrl: '',
+      longitude: 0,
+      latitude: 0,
+      dateCreated: new Date().toISOString(),
+      type: 'pothole',
+      description: 'This is a test notification',
+      username: 'TestUser',
+      verified: 'true',
+    };
+
+    await triggerAlert(mockPost, 15);
   };
 
   const playNotificationSound = async (tone: string) => {
@@ -370,15 +433,58 @@ export default function NotificationsScreen() {
     // Play notification sound
     await playNotificationSound(settings.tone);
 
-    // Show alert
-    Alert.alert(
-      '🚨 Road Issue Alert',
-      `${post.type.charAt(0).toUpperCase() + post.type.slice(1)} detected ${Math.round(distance)}m ahead\n\nReported by: ${post.username}${post.description ? `\n\nDescription: ${post.description}` : ''}`,
-      [
-        { text: 'Dismiss', style: 'cancel' },
-        { text: 'View Details', style: 'default' }
-      ]
-    );
+    // Show custom notification instead of alert
+    const notification: AlertNotification = {
+      id: Date.now().toString(),
+      post,
+      distance,
+      timestamp: Date.now(),
+    };
+
+    setCurrentNotification(notification);
+    showNotification();
+  };
+
+  const showNotification = () => {
+    setIsNotificationVisible(true);
+    
+    // Animate in
+    Animated.parallel([
+      Animated.timing(notificationOpacity, {
+        toValue: 1,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+      Animated.spring(notificationTranslateY, {
+        toValue: 0,
+        tension: 100,
+        friction: 8,
+        useNativeDriver: true,
+      }),
+    ]).start();
+
+    // Auto hide after 4 seconds
+    setTimeout(() => {
+      hideNotification();
+    }, 4000);
+  };
+
+  const hideNotification = () => {
+    Animated.parallel([
+      Animated.timing(notificationOpacity, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+      Animated.timing(notificationTranslateY, {
+        toValue: -100,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
+      setIsNotificationVisible(false);
+      setCurrentNotification(null);
+    });
   };
 
   const toggleNotificationMode = () => {
@@ -427,11 +533,102 @@ export default function NotificationsScreen() {
     saveSettings(newSettings);
   };
 
+  const updateNearestHazard = () => {
+    if (!userLocation || posts.length === 0) {
+      setNearestHazard(null);
+      return;
+    }
+
+    let nearest: { post: Post; distance: number } | null = null;
+    let minDistance = Infinity;
+
+    posts.forEach((post) => {
+      const distance = calculateDistance(
+        userLocation.coords.latitude,
+        userLocation.coords.longitude,
+        post.latitude,
+        post.longitude
+      );
+
+      if (distance < minDistance) {
+        minDistance = distance;
+        nearest = { post, distance };
+      }
+    });
+
+    setNearestHazard(nearest);
+  };
+
   return (
     <SafeAreaView style={[
       styles.container,
       { backgroundColor: colorScheme === 'dark' ? '#000' : '#f3f4f6' }
     ]}>
+      {/* Custom Notification */}
+      {isNotificationVisible && currentNotification && (
+        <Animated.View
+          style={[
+            styles.notificationOverlay,
+            {
+              opacity: notificationOpacity,
+              transform: [{ translateY: notificationTranslateY }],
+            },
+          ]}
+        >
+          <TouchableOpacity
+            style={[
+              styles.notificationBox,
+              { backgroundColor: colorScheme === 'dark' ? '#1F2937' : '#fff' }
+            ]}
+            onPress={hideNotification}
+            activeOpacity={0.9}
+          >
+            <View style={styles.notificationHeader}>
+              <View style={styles.notificationIcon}>
+                <Ionicons name="warning" size={24} color="#EF4444" />
+              </View>
+              <View style={styles.notificationContent}>
+                <Text style={[
+                  styles.notificationTitle,
+                  { color: colorScheme === 'dark' ? '#fff' : '#1F2937' }
+                ]}>
+                  {t('notifications.alert.title')}
+                </Text>
+                <Text style={[
+                  styles.notificationSubtitle,
+                  { color: colorScheme === 'dark' ? '#9CA3AF' : '#6B7280' }
+                ]}>
+                  {interpolate('notifications.alert.subtitle', { 
+                    type: t(`notifications.types.${currentNotification.post.type}`), 
+                    distance: Math.round(currentNotification.distance) 
+                  })}
+                </Text>
+                <Text style={[
+                  styles.notificationDetails,
+                  { color: colorScheme === 'dark' ? '#D1D5DB' : '#374151' }
+                ]}>
+                  {interpolate('notifications.alert.reportedBy', { username: currentNotification.post.username })}
+                </Text>
+                {currentNotification.post.description && currentNotification.post.description !== 'No description provided' && (
+                  <Text style={[
+                    styles.notificationDescription,
+                    { color: colorScheme === 'dark' ? '#9CA3AF' : '#6B7280' }
+                  ]}>
+                    {currentNotification.post.description}
+                  </Text>
+                )}
+              </View>
+              <TouchableOpacity
+                style={styles.closeButton}
+                onPress={hideNotification}
+              >
+                <Ionicons name="close" size={20} color={colorScheme === 'dark' ? '#9CA3AF' : '#6B7280'} />
+              </TouchableOpacity>
+            </View>
+          </TouchableOpacity>
+        </Animated.View>
+      )}
+
       <FlatList 
         style={styles.content} 
         data={[1]} 
@@ -445,13 +642,13 @@ export default function NotificationsScreen() {
                 styles.title,
                 { color: colorScheme === 'dark' ? '#fff' : '#1F2937' }
               ]}>
-                Notification Mode
+                {t('notifications.title')}
               </Text>
               <Text style={[
                 styles.subtitle,
                 { color: colorScheme === 'dark' ? '#9CA3AF' : '#6B7280' }
               ]}>
-                Get alerted when approaching road issues
+                {t('notifications.subtitle')}
               </Text>
             </View>
 
@@ -485,7 +682,7 @@ export default function NotificationsScreen() {
                       color: settings.isActive ? '#fff' : (colorScheme === 'dark' ? '#9CA3AF' : '#6B7280')
                     }
                   ]}>
-                    {settings.isActive ? 'ACTIVE' : 'INACTIVE'}
+                    {settings.isActive ? t('notifications.toggle.active') : t('notifications.toggle.inactive')}
                   </Text>
                 </View>
               </TouchableOpacity>
@@ -497,11 +694,117 @@ export default function NotificationsScreen() {
                     styles.statusText,
                     { color: colorScheme === 'dark' ? '#9CA3AF' : '#6B7280' }
                   ]}>
-                    Monitoring {posts.length} nearby issues
+                    {interpolate('notifications.toggle.monitoring', { count: posts.length })}
                   </Text>
                 </View>
               )}
             </Animated.View>
+
+            {/* Nearest Hazard Section */}
+            {settings.isActive && (
+              <View style={[
+                styles.nearestHazardContainer,
+                { backgroundColor: colorScheme === 'dark' ? '#1F2937' : '#fff' }
+              ]}>
+                <View style={styles.nearestHazardHeader}>
+                  <Ionicons name="location" size={20} color="#F59E0B" />
+                  <Text style={[
+                    styles.nearestHazardTitle,
+                    { color: colorScheme === 'dark' ? '#fff' : '#1F2937' }
+                  ]}>
+                    {t('notifications.nearestHazard.title')}
+                  </Text>
+                </View>
+                
+                {nearestHazard ? (
+                  <View style={styles.hazardInfo}>
+                    <View style={styles.hazardDistance}>
+                      <Text style={[
+                        styles.distanceValue,
+                        { 
+                          color: nearestHazard.distance <= settings.proximity 
+                            ? '#EF4444' 
+                            : nearestHazard.distance <= 100 
+                              ? '#F59E0B' 
+                              : '#10B981' 
+                        }
+                      ]}>
+                        {nearestHazard.distance < 1000 
+                          ? `${Math.round(nearestHazard.distance)}m` 
+                          : `${(nearestHazard.distance / 1000).toFixed(1)}km`}
+                      </Text>
+                      <Text style={[
+                        styles.distanceLabel,
+                        { color: colorScheme === 'dark' ? '#9CA3AF' : '#6B7280' }
+                      ]}>
+                        {t('notifications.nearestHazard.away')}
+                      </Text>
+                    </View>
+                    
+                    <View style={styles.hazardDetails}>
+                      <View style={styles.hazardType}>
+                        <View style={[
+                          styles.hazardTypeIcon,
+                          { 
+                            backgroundColor: nearestHazard.post.type === 'pothole' 
+                              ? '#EF4444' 
+                              : nearestHazard.post.type === 'sign' 
+                                ? '#F59E0B' 
+                                : '#8B5CF6' 
+                          }
+                        ]}>
+                          <Ionicons 
+                            name={
+                              nearestHazard.post.type === 'pothole' 
+                                ? 'warning' 
+                                : nearestHazard.post.type === 'sign' 
+                                  ? 'stop' 
+                                  : 'construct'
+                            } 
+                            size={16} 
+                            color="#fff" 
+                          />
+                        </View>
+                        <Text style={[
+                          styles.hazardTypeName,
+                          { color: colorScheme === 'dark' ? '#fff' : '#1F2937' }
+                        ]}>
+                          {t(`notifications.types.${nearestHazard.post.type}`)}
+                        </Text>
+                      </View>
+                      
+                      <Text style={[
+                        styles.hazardReporter,
+                        { color: colorScheme === 'dark' ? '#9CA3AF' : '#6B7280' }
+                      ]}>
+                        {interpolate('notifications.nearestHazard.reportedBy', { username: nearestHazard.post.username })}
+                      </Text>
+                      
+                      {nearestHazard.post.verified && (
+                        <View style={styles.verifiedBadge}>
+                          <Ionicons name="shield-checkmark" size={12} color="#10B981" />
+                          <Text style={styles.verifiedText}>{t('notifications.nearestHazard.verified')}</Text>
+                        </View>
+                      )}
+                    </View>
+                  </View>
+                ) : (
+                  <View style={styles.noHazardInfo}>
+                    <Ionicons 
+                      name="checkmark-circle" 
+                      size={24} 
+                      color="#10B981" 
+                    />
+                    <Text style={[
+                      styles.noHazardText,
+                      { color: colorScheme === 'dark' ? '#9CA3AF' : '#6B7280' }
+                    ]}>
+                      {t('notifications.nearestHazard.noHazards')}
+                    </Text>
+                  </View>
+                )}
+              </View>
+            )}
 
             {/* Settings */}
             <View style={styles.settingsContainer}>
@@ -516,14 +819,14 @@ export default function NotificationsScreen() {
                     styles.settingTitle,
                     { color: colorScheme === 'dark' ? '#fff' : '#1F2937' }
                   ]}>
-                    Detection Range
+                    {t('notifications.settings.detectionRange.title')}
                   </Text>
                 </View>
                 <Text style={[
                   styles.settingDescription,
                   { color: colorScheme === 'dark' ? '#9CA3AF' : '#6B7280' }
                 ]}>
-                  How far to search for road issues
+                  {t('notifications.settings.detectionRange.description')}
                 </Text>
                 <View style={styles.sliderContainer}>
                   <Slider
@@ -540,7 +843,7 @@ export default function NotificationsScreen() {
                     styles.sliderValue,
                     { color: colorScheme === 'dark' ? '#fff' : '#1F2937' }
                   ]}>
-                    {settings.range} km
+                    {settings.range} {t('notifications.settings.detectionRange.unit')}
                   </Text>
                 </View>
               </View>
@@ -556,14 +859,14 @@ export default function NotificationsScreen() {
                     styles.settingTitle,
                     { color: colorScheme === 'dark' ? '#fff' : '#1F2937' }
                   ]}>
-                    Alert Distance
+                    {t('notifications.settings.alertDistance.title')}
                   </Text>
                 </View>
                 <Text style={[
                   styles.settingDescription,
                   { color: colorScheme === 'dark' ? '#9CA3AF' : '#6B7280' }
                 ]}>
-                  When to trigger the alert
+                  {t('notifications.settings.alertDistance.description')}
                 </Text>
                 <View style={styles.sliderContainer}>
                   <Slider
@@ -580,7 +883,7 @@ export default function NotificationsScreen() {
                     styles.sliderValue,
                     { color: colorScheme === 'dark' ? '#fff' : '#1F2937' }
                   ]}>
-                    {settings.proximity} m
+                    {settings.proximity} {t('notifications.settings.alertDistance.unit')}
                   </Text>
                 </View>
               </View>
@@ -599,14 +902,14 @@ export default function NotificationsScreen() {
                     styles.settingTitle,
                     { color: colorScheme === 'dark' ? '#fff' : '#1F2937' }
                   ]}>
-                    Notification Tone
+                    {t('notifications.settings.notificationTone.title')}
                   </Text>
                 </View>
                 <Text style={[
                   styles.settingDescription,
                   { color: colorScheme === 'dark' ? '#9CA3AF' : '#6B7280' }
                 ]}>
-                  Sound to play when issue detected
+                  {t('notifications.settings.notificationTone.description')}
                 </Text>
                 <View style={[
                   styles.dropdownContainer,
@@ -663,8 +966,8 @@ export default function NotificationsScreen() {
                     </TouchableOpacity>
                   </View>
                 </View>
-                
-                {/* Volume Slider */}
+
+                {/* Volume Slider - moved inside the tone card */}
                 <View style={styles.volumeContainer}>
                   <View style={styles.volumeHeader}>
                     <Ionicons name="volume-low" size={16} color={colorScheme === 'dark' ? '#9CA3AF' : '#6B7280'} />
@@ -672,7 +975,7 @@ export default function NotificationsScreen() {
                       styles.volumeLabel,
                       { color: colorScheme === 'dark' ? '#9CA3AF' : '#6B7280' }
                     ]}>
-                      Volume
+                      {t('notifications.settings.volume')}
                     </Text>
                     <Ionicons name="volume-high" size={16} color={colorScheme === 'dark' ? '#9CA3AF' : '#6B7280'} />
                   </View>
@@ -711,13 +1014,13 @@ export default function NotificationsScreen() {
                         styles.settingTitle,
                         { color: colorScheme === 'dark' ? '#fff' : '#1F2937' }
                       ]}>
-                        Verified Issues Only
+                        {t('notifications.settings.verifiedOnly.title')}
                       </Text>
                       <Text style={[
                         styles.settingDescription,
                         { color: colorScheme === 'dark' ? '#9CA3AF' : '#6B7280' }
                       ]}>
-                        Only alert for verified reports
+                        {t('notifications.settings.verifiedOnly.description')}
                       </Text>
                     </View>
                   </View>
@@ -743,20 +1046,20 @@ export default function NotificationsScreen() {
                   styles.statusTitle,
                   { color: colorScheme === 'dark' ? '#fff' : '#1F2937' }
                 ]}>
-                  Current Status
+                  {t('notifications.status.title')}
                 </Text>
                 <View style={styles.statusItem}>
                   <Text style={[
                     styles.statusLabel,
                     { color: colorScheme === 'dark' ? '#9CA3AF' : '#6B7280' }
                   ]}>
-                    Location:
+                    {t('notifications.status.location')}
                   </Text>
                   <Text style={[
                     styles.statusValue,
                     { color: colorScheme === 'dark' ? '#fff' : '#1F2937' }
                   ]}>
-                    {userLocation ? 'Active' : 'Getting location...'}
+                    {userLocation ? t('notifications.status.locationActive') : t('notifications.status.locationGetting')}
                   </Text>
                 </View>
                 <View style={styles.statusItem}>
@@ -764,13 +1067,13 @@ export default function NotificationsScreen() {
                     styles.statusLabel,
                     { color: colorScheme === 'dark' ? '#9CA3AF' : '#6B7280' }
                   ]}>
-                    Nearby Issues:
+                    {t('notifications.status.nearbyIssues')}
                   </Text>
                   <Text style={[
                     styles.statusValue,
                     { color: colorScheme === 'dark' ? '#fff' : '#1F2937' }
                   ]}>
-                    {posts.length} found
+                    {interpolate('notifications.status.issuesFound', { count: posts.length })}
                   </Text>
                 </View>
                 <View style={styles.statusItem}>
@@ -778,7 +1081,7 @@ export default function NotificationsScreen() {
                     styles.statusLabel,
                     { color: colorScheme === 'dark' ? '#9CA3AF' : '#6B7280' }
                   ]}>
-                    Alerts Triggered:
+                    {t('notifications.status.alertsTriggered')}
                   </Text>
                   <Text style={[
                     styles.statusValue,
@@ -787,6 +1090,21 @@ export default function NotificationsScreen() {
                     {notifiedPosts.size}
                   </Text>
                 </View>
+                
+                {/* Test Notification Button */}
+                <TouchableOpacity
+                  style={[
+                    styles.testNotificationButton,
+                    { backgroundColor: colorScheme === 'dark' ? '#3B82F6' : '#2563EB' }
+                  ]}
+                  onPress={testNotification}
+                  activeOpacity={0.8}
+                >
+                  <Ionicons name="notifications" size={20} color="#fff" />
+                  <Text style={styles.testNotificationText}>
+                    {t('notifications.status.testNotification')}
+                  </Text>
+                </TouchableOpacity>
               </View>
             )}
           </View>
@@ -987,8 +1305,8 @@ const styles = StyleSheet.create({
   volumeContainer: {
     marginLeft: 36,
     marginRight: 24,
+    marginTop: 16,
     marginBottom: 10,
-    zIndex: 1000,
   },
   volumeHeader: {
     flexDirection: 'row',
@@ -1008,4 +1326,150 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 8,
   },
-}); 
+  notificationOverlay: {
+    position: 'absolute',
+    top: 60, // Position below status bar
+    left: 16,
+    right: 16,
+    zIndex: 1000,
+  },
+  notificationBox: {
+    borderRadius: 16,
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+    borderLeftWidth: 4,
+    borderLeftColor: '#EF4444',
+  },
+  notificationHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  notificationIcon: {
+    marginRight: 16,
+  },
+  notificationContent: {
+    flex: 1,
+  },
+  notificationTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 8,
+  },
+  notificationSubtitle: {
+    fontSize: 16,
+    marginBottom: 8,
+  },
+  notificationDetails: {
+    fontSize: 14,
+    marginBottom: 8,
+  },
+  notificationDescription: {
+    fontSize: 14,
+  },
+  closeButton: {
+    padding: 16,
+  },
+  testNotificationButton: {
+    borderRadius: 12,
+    padding: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  testNotificationText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#fff',
+  },
+  nearestHazardContainer: {
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 24,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  nearestHazardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  nearestHazardTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    marginLeft: 8,
+  },
+  hazardInfo: {
+    flexDirection: 'column',
+    gap: 12,
+  },
+  hazardDistance: {
+    alignItems: 'center',
+  },
+  distanceValue: {
+    fontSize: 32,
+    fontWeight: 'bold',
+  },
+  distanceLabel: {
+    fontSize: 14,
+    marginTop: 4,
+  },
+  hazardDetails: {
+    gap: 8,
+  },
+  hazardType: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  hazardTypeIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    marginRight: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  hazardTypeName: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  hazardReporter: {
+    fontSize: 14,
+    marginLeft: 44, // Align with type name
+  },
+  verifiedBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginLeft: 44, // Align with type name
+  },
+  verifiedText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#10B981',
+    marginLeft: 4,
+  },
+  noHazardInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 12,
+  },
+  noHazardText: {
+    fontSize: 16,
+    fontWeight: '500',
+  },
+});
