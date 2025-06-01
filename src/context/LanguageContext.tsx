@@ -11,9 +11,74 @@ const i18n = new I18n({
         navigation: {
             home: 'Home',
             report: 'Report',
+            notifications: 'Notifications',
             map: 'Map',
             myReports: 'My Reports',
             settings: 'Settings'
+        },
+        notifications: {
+            title: 'Notification Mode',
+            subtitle: 'Get alerted when approaching road issues',
+            toggle: {
+                active: 'ACTIVE',
+                inactive: 'INACTIVE',
+                monitoring: 'Monitoring {count} nearby issues'
+            },
+            settings: {
+                detectionRange: {
+                    title: 'Detection Range',
+                    description: 'How far to search for road issues',
+                    unit: 'km'
+                },
+                alertDistance: {
+                    title: 'Alert Distance',
+                    description: 'When to trigger the alert',
+                    unit: 'm'
+                },
+                notificationTone: {
+                    title: 'Notification Tone',
+                    description: 'Sound to play when issue detected'
+                },
+                volume: 'Volume',
+                verifiedOnly: {
+                    title: 'Verified Issues Only',
+                    description: 'Only alert for verified reports'
+                }
+            },
+            tones: {
+                default: 'Default Beep',
+                alert: 'Alert Chime',
+                bell: 'Bell Ring',
+                warning: 'Warning Buzzer',
+                ping: 'Gentle Ping'
+            },
+            nearestHazard: {
+                title: 'Nearest Hazard',
+                away: 'away',
+                reportedBy: 'Reported by {username}',
+                verified: 'Verified',
+                noHazards: 'No hazards detected in your area'
+            },
+            status: {
+                title: 'Current Status',
+                location: 'Location:',
+                locationActive: 'Active',
+                locationGetting: 'Getting location...',
+                nearbyIssues: 'Nearby Issues:',
+                issuesFound: '{count} found',
+                alertsTriggered: 'Alerts Triggered:',
+                testNotification: 'Test Notification'
+            },
+            alert: {
+                title: '🚨 Road Issue Alert',
+                subtitle: '{type} detected {distance}m ahead',
+                reportedBy: 'Reported by: {username}'
+            },
+            types: {
+                pothole: 'Pothole',
+                sign: 'Sign',
+                sidewalk: 'Sidewalk'
+            }
         },
         report: {
             reportQuestion: 'What do you want to report?',
@@ -50,9 +115,74 @@ const i18n = new I18n({
         navigation: {
             home: 'Anasayfa',
             report: 'Raporla',
+            notifications: 'Bildirimler',
             map: 'Harita',
             myReports: 'Raporlarım',
             settings: 'Ayarlar'
+        },
+        notifications: {
+            title: 'Bildirim Modu',
+            subtitle: 'Yol sorunlarına yaklaştığınızda uyarı alın',
+            toggle: {
+                active: 'AKTİF',
+                inactive: 'PASİF',
+                monitoring: '{count} yakın sorun izleniyor'
+            },
+            settings: {
+                detectionRange: {
+                    title: 'Algılama Mesafesi',
+                    description: 'Yol sorunlarını ne kadar uzaktan arayacak',
+                    unit: 'km'
+                },
+                alertDistance: {
+                    title: 'Uyarı Mesafesi',
+                    description: 'Uyarının ne zaman tetikleneceği',
+                    unit: 'm'
+                },
+                notificationTone: {
+                    title: 'Bildirim Sesi',
+                    description: 'Sorun tespit edildiğinde çalacak ses'
+                },
+                volume: 'Ses Seviyesi',
+                verifiedOnly: {
+                    title: 'Sadece Doğrulanmış Sorunlar',
+                    description: 'Sadece doğrulanmış raporlar için uyarı'
+                }
+            },
+            tones: {
+                default: 'Varsayılan Bip',
+                alert: 'Uyarı Sesi',
+                bell: 'Zil Sesi',
+                warning: 'Tehlike Sesi',
+                ping: 'Yumuşak Ping'
+            },
+            nearestHazard: {
+                title: 'En Yakın Tehlike',
+                away: 'uzakta',
+                reportedBy: '{username} tarafından raporlandı',
+                verified: 'Doğrulandı',
+                noHazards: 'Bölgenizde herhangi bir tehlike tespit edilmedi'
+            },
+            status: {
+                title: 'Mevcut Durum',
+                location: 'Konum:',
+                locationActive: 'Aktif',
+                locationGetting: 'Konum alınıyor...',
+                nearbyIssues: 'Yakın Sorunlar:',
+                issuesFound: '{count} bulundu',
+                alertsTriggered: 'Tetiklenen Uyarılar:',
+                testNotification: 'Test Bildirimi'
+            },
+            alert: {
+                title: '🚨 Yol Sorunu Uyarısı',
+                subtitle: '{distance}m ileride {type} tespit edildi',
+                reportedBy: 'Rapor eden: {username}'
+            },
+            types: {
+                pothole: 'Çukur',
+                sign: 'Tabela',
+                sidewalk: 'Kaldırım'
+            }
         },
         report: {
             reportQuestion: 'Neyi raporlamak istiyorsun?',
@@ -91,6 +221,7 @@ interface ILanguageContext {
     locale: string;
     setLocale: (locale: string) => void;
     t: (key: string) => string;
+    interpolate: (key: string, variables: Record<string, string | number>) => string;
     isReady: boolean;
 }
 
@@ -98,6 +229,7 @@ const defaultContext: ILanguageContext = {
     locale: 'en',
     setLocale: () => { },
     t: (key: string) => key,
+    interpolate: (key: string, variables: Record<string, string | number>) => key,
     isReady: true,
 };
 
@@ -142,6 +274,18 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
                 return i18n.t(key);
             } catch (error) {
                 console.error('Translation error:', error);
+                return key;
+            }
+        },
+        interpolate: (key: string, variables: Record<string, string | number>) => {
+            try {
+                let text = i18n.t(key);
+                Object.keys(variables).forEach(variable => {
+                    text = text.replace(new RegExp(`{${variable}}`, 'g'), String(variables[variable]));
+                });
+                return text;
+            } catch (error) {
+                console.error('Interpolation error:', error);
                 return key;
             }
         },

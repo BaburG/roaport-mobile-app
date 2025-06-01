@@ -50,16 +50,23 @@ export default function TabLayout() {
         headerShown: false,
         tabBarButton: HapticTab,
         tabBarBackground: TabBarBackground,
-        tabBarLabelStyle: {
-          fontSize: 12,
-          fontWeight: '500',
-        },
+        tabBarStyle: Platform.select({
+          ios: {
+            position: 'absolute',
+            backgroundColor: colorScheme === 'dark' ? '#1F2937' : '#fff',
+            borderTopColor: colorScheme === 'dark' ? '#374151' : '#E5E7EB',
+          },
+          default: {
+            backgroundColor: colorScheme === 'dark' ? '#1F2937' : '#fff',
+            borderTopColor: colorScheme === 'dark' ? '#374151' : '#E5E7EB',
+          },
+        }),
       }}>
       <Tabs.Screen
         name="index"
         options={{
-          title: t('navigation.home'),
-          tabBarIcon: ({ color }) => <Ionicons size={24} name="home" color={color} />,
+          title: t('navigation.notifications'),
+          tabBarIcon: ({ color }) => <Ionicons size={28} name="notifications-outline" color={color} />,
         }}
       />
       <Tabs.Screen
