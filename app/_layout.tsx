@@ -14,10 +14,10 @@ import Constants from 'expo-constants';
 
 import { LanguageProvider } from '../src/context/LanguageContext';
 import { AuthProvider } from '../src/context/AuthContext';
+import { NotificationProvider } from '@/src/context/NotificationContext';
 
 SplashScreen.preventAutoHideAsync();
 
-// Configure notification handler
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
     shouldShowAlert: true,
@@ -30,7 +30,7 @@ Notifications.setNotificationHandler({
 
 function LoadingScreen() {
   const colorScheme = useColorScheme();
-  
+
   return (
     <View style={[
       styles.loadingContainer,
@@ -87,17 +87,20 @@ function RootLayoutContent() {
 
   return (
     <SafeAreaProvider>
-      <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-        <LanguageProvider>
-          <AuthProvider>
-            <Stack screenOptions={{ headerShown: false }}>
-              <Slot />
-            </Stack>
-            <StatusBar style="auto" />
-            <Toast />
-          </AuthProvider>
-        </LanguageProvider>
-      </ThemeProvider>
+      <AuthProvider>
+
+        <NotificationProvider>
+          <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+            <LanguageProvider>
+              <Stack screenOptions={{ headerShown: false }}>
+                <Slot />
+              </Stack>
+              <StatusBar style="auto" />
+              <Toast />
+            </LanguageProvider>
+          </ThemeProvider>
+        </NotificationProvider>
+      </AuthProvider>
     </SafeAreaProvider>
   );
 }
@@ -125,17 +128,17 @@ async function registerForPushNotificationsAsync() {
   if (Device.isDevice) {
     const { status: existingStatus } = await Notifications.getPermissionsAsync();
     let finalStatus = existingStatus;
-    
+
     if (existingStatus !== 'granted') {
       const { status } = await Notifications.requestPermissionsAsync();
       finalStatus = status;
     }
-    
+
     if (finalStatus !== 'granted') {
       console.log('Failed to get push token for push notification!');
       return;
     }
-    
+
     token = await Notifications.getExpoPushTokenAsync({
       projectId: Constants.expoConfig?.extra?.eas?.projectId,
     });

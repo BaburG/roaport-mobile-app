@@ -2,7 +2,7 @@
   "expo": {
     "name": "Roaport Mobile App",
     "slug": "roaport-mobile-app",
-    "version": "1.0.2",
+    "version": "1.0.3",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "roaport",
@@ -16,7 +16,7 @@
         "NSLocationAlwaysUsageDescription": "This app needs access to location when in the background to mark the location of reported issues.",
         "NSLocationAlwaysAndWhenInUseUsageDescription": "This app needs access to location to mark the location of reported issues.",
         "NSCameraUsageDescription": "This app needs access to the camera to take photos of road issues.",
-        "UIBackgroundModes": ["remote-notification"]
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
@@ -28,9 +28,7 @@
         "android.permission.CAMERA",
         "android.permission.ACCESS_FINE_LOCATION",
         "android.permission.ACCESS_COARSE_LOCATION",
-        "android.permission.RECORD_AUDIO",
-        "android.permission.RECEIVE_BOOT_COMPLETED",
-        "android.permission.VIBRATE"
+        "android.permission.RECORD_AUDIO"
       ],
       "package": "com.anonymous.roaportmobileapp",
       "googleServicesFile": "./google-services.json"
@@ -64,19 +62,6 @@
         "expo-camera",
         {
           "cameraPermission": "Allow $(PRODUCT_NAME) to access your camera to take photos of road issues."
-        }
-      ],
-      [
-        "expo-notifications",
-        {
-          "icon": "./assets/images/adaptive-icon.png",
-          "color": "#ffffff"
-        }
-      ],
-      [
-        "@react-native-firebase/app",
-        {
-          "googleServicesFile": "./google-services.json"
         }
       ]
     ],
