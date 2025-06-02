@@ -8,8 +8,8 @@ import React, {
 } from "react";
 import * as Notifications from "expo-notifications";
 import { EventSubscription } from "expo-modules-core";
-// import { registerForPushNotificationsAsync } from "@/src/utils/registerForPushNotificationsAsync";
-import { usePushTokenService } from "@/src/services/notifications/pushTokenService";
+import { registerForPushNotificationsAsync } from "@/src/utils/registerForPushNotificationsAsync";
+// import { usePushTokenService } from "@/src/services/notifications/pushTokenService";
 import { useAuth } from "@/src/context/AuthContext";
 import Toast from "react-native-toast-message";
 
@@ -44,7 +44,7 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
     const [notification, setNotification] =
         useState<Notifications.Notification | null>(null);
     const [error, setError] = useState<Error | null>(null);
-    const { registerPushToken } = usePushTokenService();
+    // const { registerPushToken } = usePushTokenService();
     const { isAuthenticated } = useAuth();
 
     const notificationListener = useRef<EventSubscription | null>(null);
@@ -52,12 +52,12 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
 
     // First effect: Get push token
     useEffect(() => {
-        // registerForPushNotificationsAsync().then(
-        //     (token) => {
-        //         setExpoPushToken(token);
-        //     },
-        //     (error) => setError(error)
-        // );
+        registerForPushNotificationsAsync().then(
+            (token) => {
+                setExpoPushToken(token);
+            },
+            (error) => setError(error)
+        );
 
         notificationListener.current =
             Notifications.addNotificationReceivedListener((notification) => {
@@ -88,18 +88,18 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
     }, []);
 
     // Second effect: Register push token with backend when we have both token and auth state
-    useEffect(() => {
-        if (expoPushToken && isAuthenticated !== null) {
-            registerPushToken(expoPushToken).catch((error) => {
-                console.error('Failed to register push token:', error);
-                Toast.show({
-                    type: 'error',
-                    text1: 'Failed to register push notifications',
-                    text2: 'Please try again later',
-                });
-            });
-        }
-    }, [expoPushToken, isAuthenticated, registerPushToken]);
+    // useEffect(() => {
+    //     if (expoPushToken && isAuthenticated !== null) {
+    //         registerPushToken(expoPushToken).catch((error) => {
+    //             console.error('Failed to register push token:', error);
+    //             Toast.show({
+    //                 type: 'error',
+    //                 text1: 'Failed to register push notifications',
+    //                 text2: 'Please try again later',
+    //             });
+    //         });
+    //     }
+    // }, [expoPushToken, isAuthenticated, registerPushToken]);
 
     return (
         <NotificationContext.Provider
