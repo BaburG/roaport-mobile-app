@@ -1,1 +1,1 @@
-export const API_URL = process.env.EXPO_PUBLIC_API_URL || 'https://api.roaport.com'; 
+export const API_URL = process.env.EXPO_PUBLIC_API_URL || 'https://www.roaport.com/api'; 
