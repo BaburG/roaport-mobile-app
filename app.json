@@ -15,9 +15,12 @@
         "NSLocationWhenInUseUsageDescription": "This app needs access to location when open to mark the location of reported issues.",
         "NSLocationAlwaysUsageDescription": "This app needs access to location when in the background to mark the location of reported issues.",
         "NSLocationAlwaysAndWhenInUseUsageDescription": "This app needs access to location to mark the location of reported issues.",
-        "NSCameraUsageDescription": "This app needs access to the camera to take photos of road issues.",
-        "ITSAppUsesNonExemptEncryption": false
-      }
+        "NSCameraUsageDescription": "This app needs access to the camera to take photos of road issues."
+      },
+      "entitlements": {
+        "aps-environment": "production"
+      },
+      "buildNumber": "4"
     },
     "android": {
       "adaptiveIcon": {
