@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "123210591845",
+    "project_id": "roaport-mobile-app",
+    "storage_bucket": "roaport-mobile-app.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:123210591845:android:0e7424ace80aff0062e08c",
+        "android_client_info": {
+          "package_name": "com.anonymous.roaportmobileapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAqLnip1D0AO1xGlo3NIGppnu6wScrHI2M"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -9,6 +9,11 @@ dist/
 web-build/
 expo-env.d.ts
 
+roaport-mobile-app-firebase-adminsdk-fbsvc-c80a7e8589.json
+google-services.json
+/ios
+/android
+
 # Native
 *.orig.*
 *.jks

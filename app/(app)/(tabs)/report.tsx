@@ -12,9 +12,11 @@ import * as Location from 'expo-location';
 import { useRouter } from 'expo-router';
 import { LanguageContext } from '@/src/context/LanguageContext';
 import { useAuth } from '@/src/context/AuthContext';
+import { useNotification } from '@/src/context/NotificationContext';
 
 export default function ReportScreen() {
   const { user, anonymousId } = useAuth();
+  const { expoPushToken } = useNotification();
   const [uploading, setUploading] = useState<boolean>(false);
   const [isCapturing, setIsCapturing] = useState<boolean>(false);
   const [permission, requestPermission] = useCameraPermissions();
@@ -145,7 +147,9 @@ export default function ReportScreen() {
       formData.append('name', identifier);
       formData.append('description', description || 'No description provided');
       formData.append('type', selectedType);
-
+      if (expoPushToken) {
+        formData.append('pushToken', expoPushToken);
+      }
       if (location) {
         formData.append('location', JSON.stringify(location));
       }
